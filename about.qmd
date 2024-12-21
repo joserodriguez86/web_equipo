@@ -1,0 +1,44 @@
+---
+title: "Quiénes somos"
+---
+
+### Eduardo Chávez Molina
+
+::: columns
+::: {.column width="70%"}
+::: {.text-right}
+
+Investigador y docente de la Facultad de Ciencias Sociales en la Universidad de Buenos Aires y en la Facultad de Humanidades de la Universidad Nacional de Mar del Plata.
+
+[echavezmolina\@gmail.com](mailto:echavezmolina@gmail.com)
+
+:::
+:::
+
+::: {.column width="30%"}
+
+![](imagenes/lalo.jpg){width="200px"}
+
+:::
+:::
+
+
+### Eduardo Chávez Molina
+
+::: columns
+::: {.column width="70%"}
+::: {.text-right}
+
+Investigador y docente de la Facultad de Ciencias Sociales en la Universidad de Buenos Aires y en la Facultad de Humanidades de la Universidad Nacional de Mar del Plata.
+
+[echavezmolina\@gmail.com](mailto:echavezmolina@gmail.com)
+
+:::
+:::
+
+::: {.column width="30%"}
+
+![](imagenes/lalo.jpg){width="200px"}
+
+:::
+:::

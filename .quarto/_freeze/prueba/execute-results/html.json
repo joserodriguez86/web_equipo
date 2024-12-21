@@ -1,0 +1,17 @@
+{
+  "hash": "7d297de2d30ddb16afad70480d279b2a",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"prueba\"\neditor: visual\nlang: es\nfig-cap-location: top\n---\n\n::: {.cell}\n\n```{.r .cell-code}\nplot(cars)\n```\n\n::: {.cell-output-display}\n![Plot](prueba_files/figure-html/fig-plot-1.png){#fig-plot width=672}\n:::\n:::\n\n\n\nFor example, see @fig-plot",
+    "supporting": [
+      "prueba_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
