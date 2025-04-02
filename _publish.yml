@@ -1,0 +1,4 @@
+- source: project
+  netlify:
+    - id: 52c46539-a977-4de1-9729-30edf74bc11e
+      url: https://gedyms.netlify.app

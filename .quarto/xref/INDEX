@@ -17,5 +17,14 @@
   },
   "posts/welcome/index.rmarkdown": {
     "index.html": "b95485ec"
+  },
+  "posts/informe2/index.qmd": {
+    "index.html": "985ed35b"
+  },
+  "posts/informe1/index.qmd": {
+    "index.html": "97626e27"
+  },
+  "posts/informe2/index.rmarkdown": {
+    "index.html": "378a6b6e"
   }
 }

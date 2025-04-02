@@ -8,7 +8,7 @@ title: "Quiénes somos"
 ::: {.column width="70%"}
 ::: {.text-right}
 
-Investigador y docente de la Facultad de Ciencias Sociales en la Universidad de Buenos Aires y en la Facultad de Humanidades de la Universidad Nacional de Mar del Plata.
+Docente de la Facultad de Ciencias Sociales en la Universidad de Buenos Aires y en la Facultad de Humanidades de la Universidad Nacional de Mar del Plata. Investigador en el Instituto de Investigaciones Gino Germani (UBA)
 
 [echavezmolina\@gmail.com](mailto:echavezmolina@gmail.com)
 
@@ -17,28 +17,148 @@ Investigador y docente de la Facultad de Ciencias Sociales en la Universidad de 
 
 ::: {.column width="30%"}
 
-![](imagenes/lalo.jpg){width="200px"}
+![](imagenes/lalo.jpeg){width="200px"}
 
 :::
 :::
 
 
-### Eduardo Chávez Molina
+### Pablo Molina Derteano
 
 ::: columns
 ::: {.column width="70%"}
 ::: {.text-right}
 
-Investigador y docente de la Facultad de Ciencias Sociales en la Universidad de Buenos Aires y en la Facultad de Humanidades de la Universidad Nacional de Mar del Plata.
+Docente de la Facultad de Ciencias Sociales en la Universidad de Buenos Aires y en la Facultad de Humanidades de la Universidad Nacional de Mar del Plata. Investigador del Consejo Nacional de Investigaciones Científicas y Técnicas (CONICET) en el Instituto de Investigaciones Gino Germani (UBA).
 
-[echavezmolina\@gmail.com](mailto:echavezmolina@gmail.com)
+[pablomd2009\@gmail.com](mailto:pablomd2009@gmail.com)
 
 :::
 :::
 
 ::: {.column width="30%"}
 
-![](imagenes/lalo.jpg){width="200px"}
+![](imagenes/Pablo-Derteano.png){width="200px"}
 
 :::
 :::
+
+### Victoria Matozo  
+
+::: columns
+::: {.column width="70%"}
+::: {.text-right}
+
+Docente de la Facultad de Ciencias Sociales en la Universidad de Buenos Aires y en el Departamento de Ciencias de la Salud y el Deporte de la Universidad Nacional de José C. Paz. Investigadora del Consejo Nacional de Investigaciones Científicas y Técnicas (CONICET) en el Instituto de Investigaciones Gino Germani (UBA).
+
+[victoria.matozo\@gmail.com](mailto:victoria.matozo@gmail.com)
+
+:::
+:::
+
+::: {.column width="30%"}
+
+![](imagenes/Pablo-Derteano.png){width="200px"}
+
+:::
+:::
+
+### José Rodríguez de la Fuente
+
+::: columns
+::: {.column width="70%"}
+::: {.text-right}
+
+Docente de la Facultad de Ciencias Sociales en la Universidad de Buenos Aires y la Facultad Latinoamericana de Ciencias Sociales (FLACSO). Investigador del Consejo Nacional de Investigaciones Científicas y Técnicas (CONICET) en el Instituto de Investigaciones Gino Germani (UBA).
+
+[jrodriguez\@conicet.gov.ar](mailto:jrodriguez@conicet.gov.ar)
+
+:::
+:::
+
+::: {.column width="30%"}
+
+![](imagenes/jose_españa.jpg){width="200px"}
+
+
+:::
+:::
+
+### María Clara Fernández Melián
+
+::: columns
+::: {.column width="70%"}
+::: {.text-right}
+
+Docente de la Universidad Nacional de Tres de Febrero y de la Facultad de Ciencias Sociales en la Universidad de Buenos Aires. Profesional en análisis de información estadística sociodemográfica en el Instituto Nacional de Estadística y Censos.
+
+[mfernandezmelian\@gmail.com](mailto:mfernandezmelian@gmail.com)
+
+:::
+:::
+
+::: {.column width="30%"}
+
+![](imagenes/jose_españa.jpg){width="200px"}
+
+:::
+:::
+
+### Mariana Lucía Sosa
+
+::: columns
+::: {.column width="70%"}
+::: {.text-right}
+
+Investigadora asistente del CONICET. Doctora en Ciencias Sociales de la Universidad de Buenos Aires (UBA), Magíster en Sociología Económica (IDAES/UNSAM) y Licenciada en Sociología de la Universidad de Buenos Aires (UBA).
+
+[sosa.mariana.lucia\@gmail.com](mailto:sosa.mariana.lucia@gmail.com)
+
+:::
+:::
+
+::: {.column width="30%"}
+
+![](imagenes/mariana.jpeg){width="200px"}
+
+:::
+:::
+
+### Damián Mux
+
+::: columns
+::: {.column width="70%"}
+::: {.text-right}
+
+Becario en investigación por la Universidad de Buenos Aires y el Instituto de Investigaciones Gino Germani.
+Docente de la Facultad de Humanidades de la Universidad de Mar del Plata.
+
+[damianmux\@gmail.com](mailto:damianmux@gmail.com)
+
+:::
+:::
+
+::: {.column width="30%"}
+
+![](imagenes/damian.jpg){width="200px"}
+
+
+:::
+:::
+
+### Pedro Manzano
+
+::: columns
+::: {.column width="70%"}
+::: {.text-right}
+
+Estudiante avanzado de Sociología (UBA) con intereses de desarrollarse en el análisis de las clases sociales, la movilidad social y la pobreza.
+
+[manzanopedro1999\@gmail.com](mailto:manzanopedro1999@gmail.com)
+
+:::
+:::
+
+::: {.column width="30%"}
+
+![](imagenes/pedro.jpeg){width="200px"}
