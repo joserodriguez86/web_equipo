@@ -1,0 +1,1 @@
+Sitemap: https://gedyms.netlify.app/sitemap.xml
