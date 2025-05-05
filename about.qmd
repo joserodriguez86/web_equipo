@@ -124,6 +124,21 @@ Investigadora asistente del CONICET. Doctora en Ciencias Sociales de la Universi
 :::
 :::
 
+### Nadia Rizzo
+::: columns
+::: {.column width="70%"}
+::: {.text-right}
+
+Docente de la Facultad de Ciencias Sociales en la Universidad de Buenos Aires. Investigadora en el Instituto de Investigaciones Gino Germani (UBA). Profesional técnico de la Secretaría Nacional de Niñez, Adolescencia y Familia.
+
+[nadia.rizz\@gmail.com](mailto:nadia.rizz@gmail.com)
+
+:::
+:::
+
+::: {.column width="30%"}
+![](imagenes/nadia.png){width="200px"}
+
 ### Damián Mux
 
 ::: columns
