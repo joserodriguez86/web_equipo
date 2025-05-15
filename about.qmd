@@ -138,6 +138,9 @@ Docente de la Facultad de Ciencias Sociales en la Universidad de Buenos Aires. I
 
 ::: {.column width="30%"}
 ![](imagenes/nadia.png){width="200px"}
+:::
+:::
+
 
 ### Damián Mux
 
@@ -177,3 +180,6 @@ Estudiante avanzado de Sociología (UBA) con intereses de desarrollarse en el an
 ::: {.column width="30%"}
 
 ![](imagenes/pedro.jpeg){width="200px"}
+
+:::
+:::
