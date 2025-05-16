@@ -1,0 +1,1829 @@
+---
+title: "¿Recuperación ilusoria? Pobreza y desigualdad en Argentina durante 2024"
+author: 
+  - Eduardo Chávez Molina
+  - Mariana Sosa
+  - José Rodríguez de la Fuente
+date: "2025-5-16"
+categories: 
+  - Pobreza
+  - Desigualdad
+  - Informalidad
+lang: es
+fig-caption: true
+fig-cap-location: top
+toc: true
+---
+
+```{r Librerías y bases, message=FALSE, warning=FALSE, echo=FALSE}
+
+rm(list = ls())
+pacman::p_load(tidyverse, eph, ggsci, flextable, ggrepel, GDAtools, plotly, patchwork, spatstat, lubridate, ggalluvial, here)
+
+eph <- readRDS(here("fuentes", "eph_individual.RDS"))
+eph_hogar <- readRDS(here("fuentes", "eph_hogar.RDS"))
+
+canastas <- readxl::read_xlsx(here("fuentes", "canastas_serie.xlsx"))
+
+#IPC
+ipc <- read.csv("https://infra.datos.gob.ar/catalog/sspm/dataset/145/distribution/145.1/download/indice-precios-al-consumidor-nivel-general-base-diciembre-2016-trimestral.csv")
+
+ipc <- ipc %>% 
+  select(indice_tiempo, ipc_ng_nacional)
+
+ipc$indice_tiempo <- ymd(ipc$indice_tiempo)
+
+ipc <- ipc %>%
+  mutate(
+    ipc_actual = (ipc_ng_nacional / ipc_ng_nacional[which(ipc$indice_tiempo == ymd("2024-10-01"))] * 100),
+    anio = year(indice_tiempo),
+    trimestre = quarter(indice_tiempo),  # sin with_label
+    trimestre = case_when(
+      trimestre == 1 ~ "I",
+      trimestre == 2 ~ "II",
+      trimestre == 3 ~ "III",
+      trimestre == 4 ~ "IV"
+    )
+  )
+
+
+##
+theme_set(theme_bw())
+```
+
+
+```{r Construcción de variables, message=FALSE, warning=FALSE, echo=FALSE}
+
+#Joins
+eph <- eph %>% 
+  mutate(semestre = case_when(TRIMESTRE <= 2 ~ 1,
+                              TRIMESTRE > 2 ~ 2),
+         trim = case_when(TRIMESTRE == 1 ~ "I",
+                          TRIMESTRE == 2 ~ "II",
+                          TRIMESTRE == 3 ~ "III",
+                          TRIMESTRE == 4 ~ "IV"),
+         ano2 = str_sub(as.character(ANO4), 3, 4),
+         ano_trim = paste(as.character(ANO4), as.character(trim), sep = "-"),
+         ano_sem = paste(as.character(ANO4), as.character(semestre), sep = "-"))
+
+ipc <- ipc %>% 
+  mutate(ano_trim = paste(as.character(anio), as.character(trimestre), sep = "-")) %>% 
+  select(ano_trim, ipc_actual)
+
+eph <- eph %>% 
+  left_join(ipc, by = "ano_trim")
+
+
+#Creación de variables
+eph <- calculate_poverty(base = eph, basket = canastas, print_summary = FALSE,
+                         window = "semester")
+
+eph <- organize_caes(base = eph)
+
+
+calcular_tamano <- function(x, x99, a) {
+  case_when(
+    (x > 0 & x <= 5) | (x == 99 & x99 == 1) ~ 1,
+    (x > 5 & x < 99) | (x == 99 & x99 %in% c(2, 3)) ~ 2,
+    ((x == 0 & x99 == 0) | (x == 99 & x99 == 9)) & a == 1 ~ 2,
+    a == 1 ~ 2,
+    TRUE ~ NA_real_
+  )
+}
+
+eph <- eph %>%
+  mutate(
+    tamano = calcular_tamano(PP04C, PP04C99, PP04A),
+    tamano_desocup = calcular_tamano(PP11C, PP11C99, PP11A),
+    tamano = coalesce(tamano, tamano_desocup)
+  )
+
+
+eph <- eph %>% 
+  mutate(pobreza_dic = case_when(situacion %in% c("pobre", "indigente") ~ 1,
+                                 situacion %in% "no_pobre" ~ 0),
+         pobreza3 = case_when(situacion == "indigente" ~ 1,
+                              situacion == "pobre" ~ 2,
+                              situacion == "no_pobre" ~ 3),
+         indigente = case_when(situacion == "indigente" ~ 1,
+                               TRUE ~ 0),
+         cno = ifelse(is.na(PP04D_COD), PP11D_COD, PP04D_COD),
+         cno12 = ifelse(nchar(cno) > 4, str_sub(cno, 1, 2), str_sub(cno, 1, 1)),
+         cno3 = ifelse(nchar(cno) > 4, str_sub(cno, 3, 3), str_sub(cno, 2, 2)),
+         cno4 = ifelse(nchar(cno) > 4, str_sub(cno, 4, 4), str_sub(cno, 3, 3)),
+         cno5 = ifelse(nchar(cno) > 4, str_sub(cno, 5, 5), str_sub(cno, 4, 4)),
+         cno12 = as.numeric(cno12),
+         cno3 = as.numeric(cno3),
+         cno4 = as.numeric(cno4),
+         cno5 = as.numeric(cno5),
+         cat_ocup_f = case_when(CAT_OCUP == 4 ~ 3,
+                               CAT_OCUP == 1 ~ 1,
+                               CAT_OCUP == 2 ~ 2,
+                               CAT_OCUP == 3 ~ 3,
+                                TRUE ~ NA_real_),
+         cat_ocup_f = factor(cat_ocup_f,
+                             labels = c("Patrón", "Cuenta Propia",
+                                        "Asalariado")),
+         empleos_cant = case_when(PP03C == 1 ~ "Un empleo",
+                                         PP03C == 2 ~ "Más de un empleo",
+                                         TRUE ~ NA_character_),
+         INTENSI = factor(case_when(INTENSI == 1 ~ "Subocupados",
+                                    INTENSI == 2 ~ "Ocupados plenos",
+                                    INTENSI == 3 ~ "Sobreocupados",
+                                    TRUE ~ NA_character_)),
+         rama = factor(substr(caes_eph_label, start = 1, stop = 28)),
+         rama2 = substr(caes_seccion_label, start = 1, stop = 60),
+         rama2 = factor(str_to_sentence(rama2)),
+         informal = factor(case_when(ESTADO == 1 & CAT_OCUP == 3 & 
+                                   (PP07H == 1) ~ "Formal",
+                                 ESTADO == 1 & CAT_OCUP == 3 & 
+                                   PP07H != 1 ~ "Informal",
+                                 ESTADO == 2 & CAT_OCUP == 3 &
+                                   PP11N == 1 ~ "Formal",
+                                 ESTADO == 2 & CAT_OCUP == 3 &
+                                   PP11N != 1 ~ "Informal",
+                                 CAT_OCUP == 2 & cno5 <= 2 ~ "Formal",
+                                 CAT_OCUP == 2 & cno5 > 2 ~ "Informal",
+                                 CAT_OCUP == 1 & tamano == 2 ~ "Formal",
+                                 CAT_OCUP == 1 & tamano != 2 & caes_division_cod %in% c(62, 63, 85) ~ "Formal",
+                                 CAT_OCUP == 1 & tamano != 2 & !caes_division_cod %in% c(62, 63, 85) ~ "Informal",
+                                 CAT_OCUP == 4 | CAT_OCUP == 9 ~ "Informal",
+                                 TRUE ~ NA_character_)),
+         sector = factor(ifelse(PP04A != 1, "Privado", "Público")),
+         horas = PP3E_TOT + PP3F_TOT,
+         horas = ifelse(horas <= 0 | horas > 168, NA_real_, horas),
+         intensi2 = case_when(horas <= 35 ~ "Subocupados",
+                              horas > 35 & horas < 45 ~ "Ocupados plenos",
+                              horas >= 45 ~ "Sobreocupados",
+                              TRUE ~ NA_character_),
+         decil_ipcf = as.numeric(DECCFR),
+         nivel_educativo = case_when(NIVEL_ED <= 3 | NIVEL_ED == 7 ~ "Hasta primario completo",
+                                     NIVEL_ED >= 4 & NIVEL_ED <= 5 ~ "Hasta secundario completo",
+                                     NIVEL_ED == 6 ~ "Hasta terciario/universitario completo",
+                                     TRUE ~ NA_character_),
+         nivel_educativo = factor(nivel_educativo),
+         distancia_pobreza = (ITF - CBT_hogar)/CBT_hogar,
+         distancia_pobreza3 = factor(case_when(
+           distancia_pobreza <= -.5 & distancia_pobreza >= -1 ~ "-100%/-50%",
+           distancia_pobreza <= -.2 & distancia_pobreza > -.5 ~ "-49%/-20%",
+           distancia_pobreza < 0 & distancia_pobreza > -.2 ~ "-19%/0%",    
+           distancia_pobreza >= 0 & distancia_pobreza <= .2 ~ "1%/20%",
+           distancia_pobreza > .2 & distancia_pobreza <= .5 ~ "21%/50%",
+           distancia_pobreza > .5 & distancia_pobreza <= 1 ~ "51%/100%",
+           distancia_pobreza > 1 ~ "Más de 100%",
+           TRUE ~ NA_character_), 
+           levels = c("-100%/-50%", "-49%/-20%", "-19%/0%", "1%/20%", "21%/50%", "51%/100%", "Más de 100%")))
+
+
+#ingresos
+
+eph <- eph %>% 
+  group_by(ano_trim, CODUSU, NRO_HOGAR) %>%
+  mutate(miembros = n(),
+         ocupados = sum(ESTADO == 1) / sum(CH06 >= 14)) %>% 
+  ungroup() %>% 
+  mutate(ipcf2 = ITF / miembros,
+         ipcf2024 = (ipcf2 / ipc_actual)*100,
+         iti2024 = (P47T / ipc_actual)*100,
+         p21_2024 = (P21 / ipc_actual)*100,
+         ingresos_lab1 = ifelse(P21 == -9, 0, P21),
+         ingresos_lab2 = ifelse(TOT_P12 == -9, 0, TOT_P12),
+         ing_lab = ingresos_lab1 + ingresos_lab2,
+         ing_horario = ing_lab / (horas * 4.3),
+         ing_lab2024 = (ing_lab / ipc_actual)*100,
+         ing_horario2024 = (ing_horario / ipc_actual)*100,
+         peso_canasta = ITF / CBT_hogar)
+
+
+#Variables hogar
+eph_hogar <- eph_hogar %>% 
+  mutate(semestre = case_when(TRIMESTRE <= 2 ~ 1,
+                              TRIMESTRE > 2 ~ 2),
+         trim = case_when(TRIMESTRE == 1 ~ "I",
+                          TRIMESTRE == 2 ~ "II",
+                          TRIMESTRE == 3 ~ "III",
+                          TRIMESTRE == 4 ~ "IV"),
+         ano2 = str_sub(as.character(ANO4), 3, 4),
+         ano_trim = paste(as.character(ANO4), as.character(trim), sep = "-"),
+         ano_sem = paste(as.character(ANO4), as.character(semestre), sep = "-"))
+
+```
+
+
+```{r Clases sociales, message=FALSE, warning=FALSE, echo=FALSE}
+##Categoría ocupacional
+eph <- eph %>% 
+  mutate(categoria = case_when(CAT_OCUP == 1 & cno3 == 0 ~ 1,
+                               CAT_OCUP == 2 | cno3 == 1 ~ 2,
+                               (CAT_OCUP == 3 | CAT_OCUP == 4) | (cno3 == 2 | cno3 == 3) ~ 3,
+                               (CAT_OCUP == 3 | CAT_OCUP == 4) & (cno3 == 0) ~ 3,
+                               CAT_OCUP == 1 & cno3 > 1 ~ 1,
+                               CAT_OCUP == 9 & cno3 == 0 ~ 1,
+                               CAT_OCUP == 9 & cno3 > 1 ~ 3,
+                               cno3 == 9 & CAT_OCUP > 2 ~ 3))
+
+
+## Clasificador
+
+eph <- eph %>% 
+  mutate(cobhe = case_when(#Clase I: propietarios > 5 y directivos, gerentes, funcionarios de dirección
+    cno12 >= 0 & cno12 <= 4 ~ 1, 
+    cno12 == 6 | cno12 == 7 ~ 1,
+    
+    #Clase II: propietarios < 5 y directivos, gerentes, funcionarios de dirección  
+    cno12 == 5 ~ 2,
+    
+    #Clase III: cuenta propias profesionales/calificados
+    (cno12 == 32 | cno12 == 35 | cno12 == 51 | cno12 == 52 | cno12 == 53 |
+       cno12 == 54 | cno12 == 57 | cno12 == 58 | cno12 == 60 |
+       cno12 == 61 | cno12 == 62 | cno12 == 63 | cno12 == 64 |
+       cno12 == 65 | cno12 == 70 | cno12 == 71 | cno12 == 72 |
+       cno12 == 80 | cno12 == 82) & categoria == 2 & cno5 < 3 ~ 3,
+    
+    (cno12 == 10 | cno12 == 11 | cno12 == 20 | cno12 == 30 | cno12 == 31 | cno12 == 40 |
+       cno12 == 41 | cno12 == 42 | cno12 == 43 | cno12 == 44 | cno12 == 45 |
+       cno12 == 46 | cno12 == 47 | cno12 == 50 | cno12 == 81 | cno12 == 90 | 
+       cno12 == 91 | cno12 == 92) & categoria == 2 & cno5 <= 3 ~ 3,
+    
+    cno12 == 34 & categoria == 2 & cno5 <= 2 ~ 3,
+    cno12 == 34 & categoria == 2 & cno5 > 2 & cno4 > 1 ~ 3,
+    cno12 == 35 & categoria == 2 & cno5 > 2 & cno4 > 1 ~ 3,
+    
+    #Clase IV: trabajadores no manuales > 5
+    (cno12 >= 10 & cno12 <= 20) & categoria == 3 & tamano == 2 ~ 4,
+    cno12 == 30 & categoria == 3 & tamano == 2 ~ 4,
+    (cno12 == 31 | cno12 == 32) & categoria == 3 & tamano == 2 & cno5 <= 3 ~ 4,
+    cno12 == 35 & categoria == 3 & tamano == 2 & cno5 <= 3 ~ 4,
+    cno12 == 36 & categoria == 3 & tamano == 2 & cno5 <= 2 ~ 4,
+    (cno12 >= 40 & cno12 <= 43) & categoria == 3 & tamano == 2 ~ 4,
+    cno12 == 44 & categoria == 3 & tamano == 2 & cno5 <= 2 ~ 4,
+    (cno12 == 45 | cno12 == 46) & categoria == 3 & tamano == 2 ~ 4,
+    (cno12 >= 47 & cno12 <= 49) & categoria == 3 & tamano == 2 & cno5 <= 2 ~ 4,
+    (cno12 == 50 | cno12 == 52) & categoria == 3 & tamano == 2 ~ 4,
+    cno12 == 54 & categoria == 3 & tamano == 2 & cno5 <= 3 ~ 4,
+    cno12 == 58 & categoria == 3 & tamano == 2 & cno5 <= 2 ~ 4,
+    (cno12 >= 60 & cno12 <= 63) & categoria == 3 & tamano == 2 & cno5 <= 2 & cno4 != 2 ~ 4,
+    (cno12 >= 70 & cno12 <= 72) & categoria == 3 & tamano == 2 & cno5 <= 2 & cno4 != 2 ~ 4,
+    cno12 == 80 & categoria == 3 & tamano == 2 & cno5 <= 2 & cno4 != 2 ~ 4,
+    cno12 == 81 & categoria == 3 & tamano == 2 ~ 4,
+    cno12 == 91 & categoria == 3 & tamano == 2 ~ 4,
+    cno12 == 92 & categoria == 3 & tamano == 2 & cno5 == 1 ~ 4,
+    
+    #Clase V: trabajadores manuales > 5
+    (cno12 == 31 | cno12 == 32) & categoria == 3 & tamano == 2 & cno5 == 4 ~ 5,
+    cno12 == 34 & categoria == 3 & tamano == 2 ~ 5,
+    cno12 == 35 & categoria == 3 & tamano == 2 & cno5 == 4 ~ 5,
+    cno12 == 36 & categoria == 3 & tamano == 2 & cno5 > 2 ~ 5,
+    cno12 == 44 & categoria == 3 & tamano == 2 & cno5 > 2 ~ 5,
+    (cno12 >= 47 & cno12 <= 49) & categoria == 3 & tamano == 2 & cno5 > 2 ~ 5,
+    cno12 == 51 & categoria == 3 & tamano == 2 ~ 5,
+    cno12 == 53 & categoria == 3 & tamano == 2 ~ 5,
+    cno12 == 54 & categoria == 3 & tamano == 2 & cno5 == 4 ~ 5,
+    (cno12 == 56 | cno12 == 57)  & categoria == 3 & tamano == 2 ~ 5,
+    cno12 == 58 & categoria == 3 & tamano == 2 & cno5 > 2 ~ 5,
+    (cno12 >= 60 & cno12 <= 63) & categoria == 3 & tamano == 2 & cno5 <= 2 & cno4 == 2 ~ 5,
+    (cno12 >= 60 & cno12 <= 63) & categoria == 3 & tamano == 2 & cno5 > 2 ~ 5,
+    (cno12 == 64 | cno12 == 65)  & categoria == 3 & tamano == 2 ~ 5,
+    (cno12 >= 70 & cno12 <= 72) & categoria == 3 & tamano == 2 & cno5 <= 2 & cno4 == 2 ~ 5,
+    (cno12 >= 70 & cno12 <= 72) & categoria == 3 & tamano == 2 & cno5 > 2 ~ 5,
+    cno12 == 80 & categoria == 3 & tamano == 2 & cno5 <= 2 & cno4 == 2 ~ 5,
+    cno12 == 80 & categoria == 3 & tamano == 2 & cno5 > 2 ~ 5,
+    (cno12 == 82 | cno12 == 90) & categoria == 3 & tamano == 2  ~ 5,
+    cno12 == 92 & categoria == 3 & tamano == 2 & cno5 > 1 ~ 5,
+    
+    #Clase VI: trabajadores no manuales < 5
+    (cno12 >= 10 & cno12 <= 20) & categoria == 3 & tamano == 1 ~ 6,
+    cno12 == 30 & categoria == 3 & tamano == 1 ~ 6,
+    (cno12 == 31 | cno12 == 32) & categoria == 3 & tamano == 1 & cno5 <= 3 ~ 6,
+    cno12 == 35 & categoria == 3 & tamano == 1 & cno5 <= 3 ~ 6,
+    cno12 == 36 & categoria == 3 & tamano == 1 & cno5 <= 2 ~ 6,
+    (cno12 >= 40 & cno12 <= 43) & categoria == 3 & tamano == 1 ~ 6,
+    cno12 == 44 & categoria == 3 & tamano == 1 & cno5 <= 2 ~ 6,
+    (cno12 == 45 | cno12 == 46) & categoria == 3 & tamano == 1 ~ 6,
+    (cno12 >= 47 & cno12 <= 49) & categoria == 3 & tamano == 1 & cno5 <= 2 ~ 6,
+    (cno12 == 50 | cno12 == 52) & categoria == 3 & tamano == 1 ~ 6,
+    cno12 == 54 & categoria == 3 & tamano == 1 & cno5 <= 3 ~ 6,
+    cno12 == 58 & categoria == 3 & tamano == 1 & cno5 <= 2 ~ 6,
+    (cno12 >= 60 & cno12 <= 63) & categoria == 3 & tamano == 1 & cno5 <= 2 & cno4 != 2 ~ 6,
+    (cno12 >= 70 & cno12 <= 72) & categoria == 3 & tamano == 1 & cno5 <= 2 & cno4 != 2 ~ 6,
+    cno12 == 80 & categoria == 3 & tamano == 1 & cno5 <= 2 & cno4 != 2 ~ 6,
+    cno12 == 81 & categoria == 3 & tamano == 1 ~ 6,
+    cno12 == 91 & categoria == 3 & tamano == 1 ~ 6,
+    cno12 == 92 & categoria == 3 & tamano == 1 & cno5 == 1 ~ 6,
+    
+    #Clase VII: trabajadores manuales < 5
+    (cno12 == 31 | cno12 == 32) & categoria == 3 & tamano == 1 & cno5 == 4 ~ 7,
+    cno12 == 34 & categoria == 3 & tamano == 1 ~ 7,
+    cno12 == 35 & categoria == 3 & tamano == 1 & cno5 == 4 ~ 7,
+    cno12 == 36 & categoria == 3 & tamano == 1 & cno5 > 2 ~ 7,
+    cno12 == 44 & categoria == 3 & tamano == 1 & cno5 > 2 ~ 7,
+    (cno12 >= 47 & cno12 <= 49) & categoria == 3 & tamano == 1 & cno5 > 2 ~ 7,
+    cno12 == 51 & categoria == 3 & tamano == 1 ~ 7,
+    cno12 == 53 & categoria == 3 & tamano == 1 ~ 7,
+    cno12 == 54 & categoria == 3 & tamano == 1 & cno5 == 4 ~ 7,
+    (cno12 == 56 | cno12 == 57)  & categoria == 3 & tamano == 1 ~ 7,
+    cno12 == 58 & categoria == 3 & tamano == 1 & cno5 > 2 ~ 7,
+    (cno12 >= 60 & cno12 <= 63) & categoria == 3 & tamano == 1 & cno5 <= 2 & cno4 == 2 ~ 7,
+    (cno12 >= 60 & cno12 <= 63) & categoria == 3 & tamano == 1 & cno5 > 2 ~ 7,
+    (cno12 == 64 | cno12 == 65)  & categoria == 3 & tamano == 1 ~ 7,
+    (cno12 >= 70 & cno12 <= 72) & categoria == 3 & tamano == 1 & cno5 <= 2 & cno4 == 2 ~ 7,
+    (cno12 >= 70 & cno12 <= 72) & categoria == 3 & tamano == 1 & cno5 > 2 ~ 7,
+    cno12 == 80 & categoria == 3 & tamano == 1 & cno5 <= 2 & cno4 == 2 ~ 7,
+    cno12 == 80 & categoria == 3 & tamano == 1 & cno5 > 2 ~ 7,
+    (cno12 == 82 | cno12 == 90) & categoria == 3 & tamano == 1  ~ 7,
+    cno12 == 92 & categoria == 3 & tamano == 1 & cno5 > 1 ~ 7,
+    cno12 == 55 ~ 7,
+    is.na(tamano) & PP04B1 == 1 ~ 7,
+    
+    #Clase VIII: Cuenta propia semi-calificados y no calificados
+    (cno12 == 10 | cno12 == 32 | cno12 == 51 | cno12 == 52 | cno12 == 53 |
+       cno12 == 54 | cno12 == 57 | cno12 == 58 | cno12 == 60 |
+       cno12 == 61 | cno12 == 62 | cno12 == 63 | cno12 == 64 |
+       cno12 == 65 | cno12 == 70 | cno12 == 71 | cno12 == 72 |
+       cno12 == 80 | cno12 == 82) & categoria == 2 & (cno5 == 3 | cno5 == 4) ~ 8,
+    
+    (cno12 == 11 | cno12 == 20 | cno12 == 30 | cno12 == 31 | cno12 == 40 |
+       cno12 == 41 | cno12 == 42 | cno12 == 43 | cno12 == 44 | cno12 == 45 |
+       cno12 == 46 | cno12 == 47 | cno12 == 50 | cno12 == 81 | cno12 == 90 | 
+       cno12 == 91 | cno12 == 92) & categoria == 2 & (cno5 == 4) ~ 8,
+    
+    cno12 == 34 & categoria == 2 & cno5 > 2 & cno4 == 1 ~ 8,
+    cno12 == 35 & categoria == 2 & cno5 > 2 & cno4 == 1 ~ 8,
+    cno12 == 36 & categoria == 2 ~ 8,
+    cno12 == 56 & categoria == 2 ~ 8,
+    cno12 == 33 ~ 8,
+    categoria == 2 & cno5 == 4 ~ 8,
+    
+    #Clase IX: Inactivos jubiladores
+    (ESTADO == 3 | ESTADO == 4) & CAT_INAC == 1 ~ 9,
+    
+    #Clase X: Inactivos otros
+    (ESTADO == 3 | ESTADO == 4) & CAT_INAC > 1 ~ 10,
+  ))
+
+eph$cobhe_f <- factor(eph$cobhe, 
+                      labels = c('Propietarios y directivos >5',
+                                 'Propietarios y directivos <=5',
+                                 'Cuenta propia profesionales / calificados',
+                                 'Trabajadores no manuales >5',
+                                 'Trabajadores manuales >5',
+                                 'Trabajadores no manuales <=5',
+                                 'Trabajadores manuales <=5',
+                                 'Cuenta propia no calificados',
+                                 'Inactivos-Jubiladores',
+                                 'Inactivos-Otros'))
+
+```
+
+
+```{r Canastas, message=FALSE, warning=FALSE, echo=FALSE}
+
+eph <- eph %>% 
+  mutate(codigo = REGION,
+         REGION = REGION.y)
+
+#Agregar variables de pobreza individuales
+
+eph <- eph %>%
+  left_join(adulto_equivalente, by = c("CH04", "CH06")) %>% 
+  mutate(periodo = paste(ANO4, TRIMESTRE, sep = ".")) %>% 
+  left_join(canastas, by = c("periodo", "REGION")) %>% 
+  group_by(ano_trim, CODUSU, NRO_HOGAR) %>%
+  mutate(miembros = n())
+
+# haven::write_sav(eph, "C:/Users/josed/Downloads/eph2016_2024.sav")
+
+```
+## Introducción
+
+En el presente informe realizamos un balance preliminar de la evolución de los ingresos y la pobreza en el primer año de gobierno de *La libertad Avanza*. Luego de un aumento inusitado de la pobreza a fines del 2023 y comienzos del 2024, producto de la devaluación del peso y su efecto sobre la inflación, en el segundo semestre de 2024 se observó una tendencia inversa. La inflación disminuyó y los ingresos monetarios de las personas se recuperaron, teniendo como correlato una baja en la tasa de pobreza y un retorno de los indicadores económicos a niveles similares a 2023.  
+
+Sin embargo, luego de semejante vaiven socioeconómico en un corto plazo, es relevante indagar sobre quiénes fueron aquellos que salieron rápidamente de la pobreza y recuperaron con mayor fuerza sus ingresos. Una hipótesis que puede plantearse es que dicha recuperación fue exclusiva de ciertos grupos pertenecientes a la clase media y trabajadora formalizada, que, a pesar de su mayor exposición al deterioro en las condiciones de vida a comienzos del año pasado, su posicionamiento en la estructura ocupacional (segmentos formales de la economía) les permitió salir rápidamente de la pobreza. En este sentido, en este informe hacemos foco en dicho aspecto, identificando las desigualdades que se esconden entre grupos, sectores y clases cuando solo observamos tasas y promedios.  
+
+
+
+
+## Tendencias generales de la pobreza
+
+La pobreza en los últimos 9 años fue escalando hacia niveles más altos, aunque con oscilaciones. Siempre, luego de aumentos abruptos en el número de hogares en dicha situación, vinieron períodos de relativo descenso que fueron estableciendo **pisos** que los sucesivos gobiernos, mediante las políticas económicas y sociales implementadas, no pudieron volver a perforar. Así, al aumento inicial de la pobreza en el gobierno de Cambiemos, derivado del incremento en las tarifas públicas y la devaluación del dólar, le siguió un descenso sostenido hasta fines de 2017 (25%), marcando el piso más bajo de todo el período.  
+Posteriormente, dos shocks generaron las condiciones para que la pobreza crezca rápidamente: la crisis de deuda en 2018, y su posterior salida devaluatoria, y la crisis generada por la pandemia del COVID-19. Desde ese último hito, se transitó un camino de descenso en los niveles de pobreza, que con sus oscilaciones marcó un segundo piso de un 34%.
+Ya más cerca de nuestros días, entre finales de 2023 y comienzos de 2024, el cambio en la política económica llevado adelante por el gobierno de *La Libertad Avanza*, que se inauguró con una fuerte devaluación del peso, impulsó a que un 55% de la población se encontrará en la pobreza. Sin embargo, durante 2024, se logró retornar a los valores previos de pobreza de 2023 (37,8%). 
+Los interrogantes iniciales que pueden plantearse son varios, pero pueden sintetizarse en dos: ¿Es ese valor cercano al 38% un nuevo piso de pobreza? ¿Qué grupos poblacionales fueron los que más rápido se recuperaron, en un contexto de baja de la inflación?
+
+En la @fig-pobreza mostramos la evolución de la tasa trimestral de pobreza e indigencia, señalando con puntos negros los pisos que se han establecido en cada administración política y en línea punteada los principales picos de las tasas.
+
+
+```{r Evolución de la pobreza, echo=FALSE, message=FALSE, warning=FALSE}
+#| fig.cap: "Evolucion de la población bajo la línea de pobreza e indigencia. Argentina urbana, 2016-2024 (trimestres)"
+#| label: fig-pobreza
+
+pobreza <- eph %>%
+  group_by(ano_trim) %>% 
+  summarise(porcentaje_pobreza = weighted.mean(pobreza_dic, PONDIH, na.rm = T),
+            porcentaje_indigencia = weighted.mean(indigente, PONDIH, na.rm = T)) %>% 
+  pivot_longer(cols = c(porcentaje_pobreza, porcentaje_indigencia), names_to = "situacion", values_to = "porcentaje") 
+
+pobreza %>% 
+  ggplot(mapping = aes(x = as.character(ano_trim), y = porcentaje, colour = situacion,
+                       group = situacion)) +
+  geom_line(linewidth = .7) +
+  geom_point(data = filter(pobreza, (ano_trim %in% c("2017-III", "2022-I", "2024-IV") & situacion == "porcentaje_pobreza")), size = 2, color = "black") +
+  geom_vline(xintercept = c("2018-IV", "2020-II", "2024-I"),
+             linetype = "dashed", color = "black") +
+  ggrepel::geom_text_repel(data = . %>% filter(ano_trim %in% c("2017-III", 
+                                                               "2022-I", "2024-IV")
+                                               & situacion == "porcentaje_pobreza"),
+                  aes(label = scales::percent(porcentaje, accuracy = 0.1)),
+                  size = 3,
+                  nudge_y = -0.01,
+                  show.legend = FALSE) +
+  labs(
+      # title = "Evolucion de la población bajo la línea de pobreza e indigencia",
+      #  subtitle = "Argentina urbana, 2016-2024 (trimestres)",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 8),
+        axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank(),
+        legend.position = "bottom") +
+  scale_color_d3(labels=c("Indigencia", "Pobreza")) +
+  scale_y_continuous(breaks = seq(0, .6, by = 0.05), limits = c(0, .6), 
+                     labels = scales::percent_format(accuracy = 1L))
+
+
+```
+Otra forma de observar el derrotero de la pobreza es analizar la distancia que presentan las personas respecto a la línea que establece que hogar es o no pobre. De este modo, la @fig-distancia muestra una estratificación de la sociedad según cuán distantes están las personas de la canasta básica de pobreza. Así, en amarillo, encontramos a las personas que presentan ingresos familiares que duplican el valor de la canasta y que fueron descendiendo a lo largo de los años, alcanzando el valor de 27% a fines de 2024%. Por el contrario, los valores más oscuros (negros y violetas) definen a las personas que se encuentran por debajo de la canasta básica total (CBT) y que aumentaron fuertemente a comienzos de 2024 y, posteriormente, retornaron a los niveles anteriores. 
+
+```{r Distancia pobreza, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Distancia porcentual del ingreso total familiar a la canasta básica de pobreza. Argentina urbana, 2016-2024 (semestres)" 
+#| label: fig-distancia
+
+eph %>% 
+  filter(!is.na(distancia_pobreza3)) %>% 
+  group_by(ano_sem, distancia_pobreza3) %>%
+  tally(PONDIH) %>%
+  group_by(ano_sem) %>%
+  mutate(n = n / sum(n)) %>%
+  ggplot(aes(x=ano_sem, y=n, fill=fct_rev(distancia_pobreza3))) +
+  geom_bar(stat="identity", position="fill") +
+  geom_text(aes(label = scales::percent(n, accuracy = 0.1, suffix = "")),
+            color = "white",
+            position = position_fill(vjust = 0.5), size = 3) +
+  labs(
+    # title = "Porcentaje de personas respecto a la distancia de los ingresos \nde su familia a la canasta básica de pobreza",
+    # subtitle = "Argentina urbana, 2016-2024 (semestres)",
+    caption = "Fuente: elaboración propia en base a EPH-INDEC."
+  ) +
+  scale_fill_viridis_d(direction = -1, option = "inferno",
+                       end = .87) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L)) +
+  labs(fill = "Distancia a la CBT") +
+  theme(legend.text = element_text(size = 9),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) 
+
+```
+
+
+## La pobreza entre los grupos sociales  
+
+
+Al preguntarnos cómo la pobreza se distribuyó en los distintos grupos sociales, lo primero que observamos es su evolución en las distintas clases sociales, considerando al mundo ocupado. La @fig-clase identifica que, en cada trimestre, desde 2023 a 2024, la pobreza creció y disminuyó casi en forma simétrica, y lo mismo sucedió al observar las clases que fueron afectadas. Si bien en términos absolutos las clases trabajadoras subalternas son las que más expuestas a la pobreza se encuentran (siempre superan el promedio), los que más fuertemente se recuperaron son aquellos sectores más formalizados y con cierto nivel de calificación: propietarios y directivos de pequeñas empresas, trabajadores manuales y no manuales de grandes establecimientos y trabajadores no manuales de pequeños establecimientos (ver @fig-clase-diferencia).
+
+```{r Pobreza según clase social, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de la pobreza según clase social. Argentina urbana, 2023-2024 (trimestres)"
+#| label: fig-clase
+
+graf <- eph %>%
+  filter(CH06 >= 18, ESTADO == 1) %>% 
+  filter(ANO4 %in% c(2023, 2024), 
+         !is.na(cobhe_f)) %>%
+  filter(!ano_trim %in% c("2023-I", "2023-II")) %>% 
+  group_by(ano_trim, cobhe_f) %>% 
+  summarise(porcentaje_pobreza = weighted.mean(pobreza_dic, PONDIH, na.rm = T)) 
+
+graf_prom <- eph %>% 
+  filter(CH06 >= 18, ESTADO == 1) %>% 
+  filter(ANO4 %in% c(2023, 2024), 
+         !is.na(cobhe_f)) %>%
+  filter(!ano_trim %in% c("2023-I", "2023-II")) %>%  
+  group_by(ano_trim) %>% 
+  summarise(porcentaje_pobreza = weighted.mean(pobreza_dic, PONDIH, na.rm = T)) %>% 
+  mutate(cobhe_f = "Promedio")
+
+graf <- bind_rows(graf, graf_prom)
+
+graf$cobhe_f <- factor(graf$cobhe_f, levels = c('Propietarios y directivos >5',
+                                                'Propietarios y directivos <=5',
+                                                'Cuenta propia profesionales / calificados',
+                                                'Trabajadores no manuales >5',
+                                                'Trabajadores manuales >5',
+                                                'Trabajadores no manuales <=5',
+                                                'Trabajadores manuales <=5',
+                                                'Cuenta propia no calificados',
+                                                'Promedio'))
+
+graf %>% 
+  ggplot(mapping = aes(x = cobhe_f, y = porcentaje_pobreza, fill = cobhe_f == "Promedio")) +
+  geom_col(alpha = .7) +
+  geom_text(aes(label = scales::percent(porcentaje_pobreza, accuracy = 0.1)), 
+            position = position_stack(0.6),
+            size = 2.5) +
+  scale_fill_manual(values = c("lightblue", "red")) +
+  labs(y = "% Pobreza",
+       # title = "Evolución de la pobreza según clase social",
+       # subtitle = "Argentina urbana, 2023-2024 (trimestres). Población ocupada mayor a 18 años.",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 7),
+        axis.text.x = element_text(size = 7),
+        plot.caption = element_text(size = 9, hjust = 1),
+        plot.subtitle = element_text(size = 10),
+        panel.grid = element_line(size = .2),
+        legend.position = "none") +
+  scale_x_discrete(limits = rev(levels(graf$cobhe_f)),
+                   labels = function(x) str_wrap(x, width = 30)) +
+  scale_y_continuous(labels= scales::percent_format(accuracy = 1L), breaks=seq(0, 6, 0.1)) + 
+  coord_flip() +
+  facet_wrap(~ano_trim)
+
+```
+
+
+
+```{r Diferencia porcentual clase, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Diferencia porcentual de la pobreza entre el 1er y 4to trimestre de 2024 por clase social. Argentina urbana, 2024 (trimestres)"
+#| label: fig-clase-diferencia
+
+graf %>%
+  pivot_wider(names_from = ano_trim, values_from = porcentaje_pobreza) %>% 
+  mutate(diferencia = abs((`2024-IV` - `2024-I`)/`2024-I`)) %>% 
+  select(cobhe_f, diferencia) %>% 
+  ggplot(mapping = aes(x = cobhe_f, y = diferencia, fill = cobhe_f == "Promedio")) +
+  geom_col(alpha = .7) +
+  geom_text(aes(label = scales::percent(diferencia, accuracy = 0.1, suffix = "")), 
+            position = position_stack(0.95),
+            size = 3) +
+  geom_hline(yintercept = 0.371, linetype = "dashed") +
+  scale_fill_manual(values = c("lightblue", "red")) +
+  labs(
+      # title = "Disminución porcentual (1er y 4to trimestre) de la pobreza \npor clase social",
+      #  subtitle = "Argentina urbana, 2024. Población ocupada mayor a 18 años.",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 8.5),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        legend.position = "none") +
+  scale_x_discrete(limits = rev(levels(graf$cobhe_f)),
+                   labels = function(x) str_wrap(x, width = 30)) +
+  scale_y_continuous(labels= scales::percent_format(accuracy = 1L), breaks=seq(0, 6, 0.1)) + 
+  coord_flip()
+
+
+```
+
+
+Al analizar la proporción de pobres entre los ocupados considerando la categoría ocupacional (@fig-categoria-ocupacional) se observa que, en 2024, quienes presentan mayor porcentaje de pobres son los cuentapropistas (45,4%), le siguen los asalariados (33,1%) y por último los patrones (23,1%).
+Los datos revelan una tendencia creciente en la pobreza entre los ocupados desde 2016 con un pico en 2024, evidenciando un deterioro reciente de las condiciones laborales. Este deterioro resultó más fuerte entre los asalariados ya que al analizar el último año (comparando 2023 y 2024) se observa que los asalariados mostraron un incremento del 15% en la proporción de pobres, los cuentapropistas un aumento del 10% y los patrones del 6%.
+Durante el primer año de gobierno de Milei^[Comparación basada en los 3t de 2023 y 2024.] se destruyeron 258 mil empleos asalariados (de los cuales 252 mil eran formales) y se crearon 226 mil cuentapropistas. Esta pérdida no se ve reflejada en la tasa de desocupación porque estos nuevos desocupados se "reconvirtieron" en trabajadores independientes cuentapropistas. 
+Este empeoramiento de las inserciones laborales se enmarca dentro de la tendencia que se viene observando en los últimos años de disminución de puestos asalariados y aumento del trabajo independiente.
+Al respecto cabe señalar que los cuentapropistas son quienes presentan mayor % de pobreza y peores ingresos. Los cuentapropistas perciben en promedio ingresos laborales mensuales 40% menores a los de los asalariados. El porcentaje de pobres dentro de los cuentapropistas pasó de 31,3% en 2016 a 45,4% en 2024.
+
+
+```{r Pobreza por categoría ocupacional, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de la pobreza según categoría ocupacional. Argentina urbana, 2016-2024 (trimestres)"
+#| label: fig-categoria-ocupacional
+
+eph %>% 
+  filter(CH06 >= 18, ESTADO == 1) %>%
+  group_by(ANO4, cat_ocup_f) %>% 
+  summarise(pobreza = weighted.mean(pobreza_dic, PONDIH, na.rm = T)) %>%
+  ggplot(aes(x = as.character(ANO4), y = pobreza, color = cat_ocup_f, group = cat_ocup_f)) +
+  geom_line() +
+  geom_point() +
+  ggrepel::geom_text_repel(aes(label = scales::percent(pobreza, accuracy = 0.1)), 
+                  size = 3,
+                  nudge_y = 0.01,
+                  show.legend = FALSE) +
+  labs(
+      # title = "Evolución de la pobreza según categoría ocupacional",
+      #  subtitle = "Argentina urbana, 2016-2024. Población ocupada mayor a 18 años.",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.",
+       color = "Categoría ocupacional") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 9),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_color_d3() +
+  scale_y_continuous(breaks = seq(0, .5, by = 0.05), limits = c(0, .5), 
+                     labels = scales::percent_format(accuracy = 1L))
+
+
+```
+La @fig-mayores muestra que durante el gobierno de Javier Milei se presentan los niveles más elevados de pobreza en jubilados en los últimos años. La incidencia de la pobreza dentro de los jubilados creció el 50,3% durante el último año^[Se consideraron los datos de pobreza anualizados, calculados como promedio de personas pobres por año.]. La pobreza en jubilados registró un aumento interanual de 8 pp. pasando de 14,9% en 2023 a 22,4% en 2024. Este dato revela que 1 de cada 5 jubilados es pobre en Argentina y que durante el último año 290 mil jubilados ingresaron a la situación de pobreza.
+
+```{r Pobreza en mayores de 65 años, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de la pobreza en mayores de 65 años. Argentina urbana, 2016-2024 (trimestres)"
+#| label: fig-mayores
+
+eph %>% 
+  filter(CH06 >= 65) %>%
+  group_by(ANO4) %>% 
+  summarise(pobreza = weighted.mean(pobreza_dic, PONDIH, na.rm = T)) %>%
+  ggplot(aes(x = as.character(ANO4), y = pobreza)) +
+  geom_col(alpha = .7, fill = "lightblue") +
+  geom_text(aes(label = scales::percent(pobreza, accuracy = 0.1)), 
+            position = position_stack(0.6),
+            size = 3) +
+  labs(
+      # title = "Evolución de la pobreza en mayores de 65 años",
+      #  subtitle = "Argentina urbana, 2016-2024.",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 9),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_color_d3() +
+  scale_y_continuous(breaks = seq(0, .25, by = 0.05), limits = c(0, .25), 
+                     labels = scales::percent_format(accuracy = 1L))
+
+```
+
+El dato de aumento de la pobreza entre los jubilados tiene su correlato en el incremento de personas mayores que se incorporaron al mercado de trabajo durante los últimos meses para tratar de compensar la caída de sus ingresos (@fig-mayores-ocupados). El cuarto trimestre de 2024 es el récord de la serie ya que muestra el nivel más elevado de jubilados que trabajan. El 18% de los jubilados tiene que salir a trabajar para compensar el deterioro de sus jubilaciones, lo cual representa un incremento del 28% en la cantidad de jubilados ocupados en relación al mismo trimestre del año 2016.
+
+```{r Mayores ocupados, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Porcentaje de mayores de 65 años ocupados. Argentina urbana, 2016-2024 (trimestres)"
+#| label: fig-mayores-ocupados
+
+eph %>% 
+  filter(CH06 >= 65) %>%
+  group_by(ano_trim, ESTADO) %>% 
+  tally(PONDERA) %>%
+  group_by(ano_trim) %>%
+  mutate(n = n/sum(n)) %>% 
+  filter(ESTADO == 1) %>% 
+  ggplot(aes(x = as.character(ano_trim), y = n, fill = ano_trim == "2024-IV", group = 1)) +
+  geom_point() +
+  geom_line() +
+  ggrepel::geom_text_repel(data = . %>% filter(ano_trim == "2024-IV"), 
+                         aes(label = scales::percent(n, accuracy = 0.1)), 
+                         size = 3,
+                         show.legend = FALSE) +
+  scale_fill_manual(values = c("lightblue", "red")) +
+  labs(
+      # title = "Porcentaje de mayores de 65 años ocupados",
+      #  subtitle = "Argentina urbana, 2016-2024 (Trimestres).",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank(),
+        legend.position = "none") +
+  scale_color_d3() +
+  scale_y_continuous(breaks = seq(.05, .20, by = 0.02), limits = c(.05, .20), 
+                     labels = scales::percent_format(accuracy = 1L))
+
+```
+
+## Estrategias de los hogares e ingresos
+
+En esta sección revisaremos la evolución de los ingresos y de las estrategias de los hogares según clases sociales y ramas de actividad. En primer lugar, observamos en la @fig-ingresos que los ingresos laborales reales se han recuperado, en promedio (línea punteada), a partir del segundo trimestre de 2024. Sin embargo, esta recomposición no tuvo la misma fuerza en todas las clases. Mientras que para las clases propietarias y directivas, las mejoras fueron sustanciales, para el resto de las clases los niveles de vida retornaron a los de mediados de 2023.
+
+```{r evolución ingresos reales, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de los ingresos laborales reales según clase social. Argentina urbana, 2022-2024 (trimestres). Población ocupada mayor a 18 años. Ingresos deflactados a 2024-IV."
+#| label: fig-ingresos
+
+#sacar outliers en ingresos
+
+identify_outliers <- function(data) {
+  Q1 <- quantile(data, 0.25, na.rm = TRUE)
+  Q3 <- quantile(data, 0.75, na.rm = TRUE)
+  IQR <- Q3 - Q1
+  lower_bound <- Q1 - 2 * IQR
+  upper_bound <- Q3 + 3.5 * IQR
+  return(data > upper_bound)
+}
+
+eph_clean <- eph %>%
+  filter(CH06 >= 18, ANO4 >= 2017, ESTADO == 1, !is.na(cobhe_f)) %>% 
+  group_by(ano_trim) %>%
+  mutate(is_outlier = identify_outliers(ing_lab2024)) %>%
+  ungroup() %>%
+  filter(!is_outlier) %>%
+  select(-is_outlier)
+
+
+tabla <- eph_clean %>% 
+  filter(ANO4 >= 2022) %>%
+  group_by(ano_trim, cobhe_f) %>% 
+  summarise(ingresos= weighted.mean(ing_lab2024, PONDIIO, na.rm = T))
+
+tabla_prom <- eph_clean %>%
+  filter(ANO4 >= 2022) %>%
+  group_by(ano_trim) %>%
+  summarise(ingresos = weighted.mean(ing_lab2024, PONDIIO, na.rm = T))
+
+tabla %>% 
+  ggplot(aes(x = as.character(ano_trim), y = ingresos)) +
+  geom_line(aes(group=cobhe_f, color=cobhe_f), linetype = 1, linewidth = .8, alpha = .6) +
+  geom_point(aes(group=cobhe_f, color=cobhe_f), size = 1.5, alpha = .6) +
+  geom_line(data = tabla_prom, linetype = "dotted", linewidth = .8, color = "black", group = 1) +
+  labs(title = "Evolución de los ingresos laborales según clase social",
+       subtitle = "Argentina urbana, 2022-2024. Población ocupada mayor a 18 años. Ingresos deflactados a 2024-IV.",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_color_d3(labels = function(x) str_wrap(x, width = 20)) +
+  scale_y_continuous(breaks = seq(0, 1700000, by = 100000), limits = c(0, 1700000), 
+                     labels = scales::label_number(scale = 1, accuracy = 1))
+
+
+
+```
+Otro abordaje puede realizarse haciendo foco en la distribución de la evolución del ingreso según rama de actividad. Como se observa en la @fig-ingresos-rama, tomando la última información disponible del cuarto trimestre de 2024 y comparando con el tercer trimestre de 2023, los ingresos laborales, en promedio, mejoraron un 6%. En naranja se exponen las ramas con mayor peso poblacional, destacándose la mejora relativa en transporte y almacenamiento, industria manufacturera y comercio, pero lejano del crecimiento experimentado por los sectores ligados a la agricultura y ganadería, los servicios profesionales e inmobiliarios. En contraposición, las ramas que no experimentaron mejoras en el período fueron las ligadas a la administración pública, el empleo doméstico y fundamentalmente la enseñanza.
+
+```{r Ingresos por rama, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Variación % de los ingresos laborales según rama de actividad. Argentina urbana, 2023-III / 2024-IV (trimestres). Población ocupada mayor a 18 años."
+#| label: fig-ingresos-rama
+
+eph_clean <- eph %>%
+  filter(CH06 >= 18, ANO4 >= 2017, ESTADO == 1, !is.na(rama2)) %>% 
+  group_by(ano_trim) %>%
+  mutate(is_outlier = identify_outliers(ing_lab2024)) %>%
+  ungroup() %>%
+  filter(!is_outlier) %>%
+  select(-is_outlier)
+
+
+tabla <- eph_clean %>%
+  filter(ano_trim == "2023-III" | ano_trim == "2024-IV") %>%
+  group_by(ano_trim, rama2) %>% 
+  summarise(ingresos= weighted.mean(ing_lab2024, PONDIIO, na.rm = T))
+
+tabla_prom <- eph_clean %>%
+  filter(ano_trim == "2023-III" | ano_trim == "2024-IV") %>%
+  group_by(ano_trim) %>%
+  summarise(ingresos = weighted.mean(ing_lab2024, PONDIIO, na.rm = T)) %>% 
+  pivot_wider(names_from = ano_trim, values_from = ingresos) %>% 
+  add_column(rama2 = "Promedio", .before = 1)
+
+
+tabla_pivot <- tabla %>%
+  pivot_wider(names_from = ano_trim, values_from = ingresos) %>% 
+  add_row(tabla_prom) %>%
+  mutate(variacion = (`2024-IV` - `2023-III`) / `2023-III`) 
+
+
+tabla_pivot %>%
+  filter(!is.na(variacion), !rama2 %in% c("Actividad no especificada claramente", "Actividades de organizaciones y organismos extraterritoriale")) %>% 
+  mutate(
+    highlight = rama2 %in% c("Promedio", "Comercio al por mayor y al por menor; reparación de vehículo",
+                             "Industria manufacturera", "Construcción", "Administración pública y defensa; planes de seguro social ob",
+                             "Enseñanza", "Salud humana y servicios sociales",
+                             "Actividades de los hogares como empleadores de personal domé",
+                             "Transporte y almacenamiento"), 
+    color = ifelse(highlight, "orange", "black"), # Asignar colores
+  ) %>%
+  ggplot(aes(x = fct_reorder(rama2, variacion), y = variacion)) +
+  geom_segment(aes(x = rama2, xend = rama2, y = 0, yend = variacion, 
+                   color = color)) + # Usar columnas calculadas
+  geom_point(aes(color = color)) + # Usar columnas calculadas
+  scale_color_identity() + # Escala para aplicar colores "directamente"
+  scale_size_identity() +  # Escala para aplicar tamaños "directamente"
+  scale_linewidth_identity() + # Escala para tamaños de líneas
+  labs(
+      # title = "Variación del ingreso según rama de actividad",
+      #  subtitle = "Argentina urbana, 2023-III / 2024-IV",
+       caption = "Fuente: Elaboración propia en base a EPH-INDEC") +
+  theme(legend.position = "none",
+        title = element_text(size = 12),
+        subtitle = element_text(size = 10),
+        plot.caption = element_text(size = 9, hjust = 1),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 8)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 80)) +
+  scale_y_continuous(breaks = seq(-2, 2, 0.05), labels = scales::percent_format(accuracy = 1L)) +
+  coord_flip()
+
+
+```
+A continuación, mostramos la distribución de la mediana de ingresos laborales para cada rama de actividad, sirviendo de complemento del gráfico anterior. Nuevamente en naranja, se identifican los gremios con mayor peso en la estructura ocupacional.
+
+
+```{r Ingresos por rama 2, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Mediana de ingresos laborales según rama de actividad. Argentina urbana, 2024-IV (trimestres). Población ocupada mayor a 18 años."
+#| label: fig-ingresos-rama2
+
+tabla <- eph %>%
+  filter(ano_trim == "2024-IV", !is.na(rama2)) %>%
+  group_by(rama2) %>% 
+  summarise(ingresos= weighted.median(ing_lab2024, PONDIIO, na.rm = T))
+
+tabla_prom <- eph_clean %>%
+  filter(ano_trim == "2024-IV", !is.na(rama2)) %>%
+  summarise(ingresos = weighted.median(ing_lab2024, PONDIIO, na.rm = T)) 
+
+tabla <- bind_rows(tabla, tabla_prom %>% mutate(rama2 = "Promedio"))
+
+tabla %>%
+  filter(!rama2 %in% c("Actividad no especificada claramente", 
+                       "Actividades de organizaciones y organismos extraterritoriale")) %>% 
+  mutate(
+    highlight = rama2 %in% c("Promedio", "Comercio al por mayor y al por menor; reparación de vehículo",
+                             "Industria manufacturera", "Construcción", "Administración pública y defensa; planes de seguro social ob",
+                             "Enseñanza", "Salud humana y servicios sociales",
+                             "Actividades de los hogares como empleadores de personal domé",
+                             "Transporte y almacenamiento"), 
+    color = ifelse(highlight, "orange", "black"), # Asignar colores
+  ) %>%
+  ggplot(aes(x = fct_reorder(rama2, ingresos), y = ingresos)) +
+  geom_segment(aes(x = rama2, xend = rama2, y = 0, yend = ingresos, 
+                   color = color)) + # Usar columnas calculadas
+  geom_point(aes(color = color)) + # Usar columnas calculadas
+  scale_color_identity() + # Escala para aplicar colores "directamente"
+  scale_size_identity() +  # Escala para aplicar tamaños "directamente"
+  scale_linewidth_identity() + # Escala para tamaños de líneas
+  labs(
+      # title = "Mediana de ingreso según rama de actividad",
+      #  subtitle = "Argentina urbana, 4to trimestre 2024",
+       caption = "Fuente: Elaboración propia en base a EPH-INDEC") +
+  theme(legend.position = "none",
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 8)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 80)) +
+  scale_y_continuous(breaks = seq(0, 2000000, 500000), labels = scales::label_number(scale = 1, accuracy = 1)) +
+  coord_flip()
+
+
+
+```
+
+
+Cambiando de dimensión de análisis, si nos centramos en los hogares, pueden identificarse determinadas prácticas económicas a las que las personas acuden en momentos de crisis. En promedio, un 16% de los hogares suelen indicar que hacen uso de sus ahorros para solventar las necesidades diarias en los últimos tres meses al momento de la encuesta (@fig-ahorros). Como puede observarse, esta práctica alcanzó sus picos al inicio de la pandemia y en el primer trimestre de 2024, en el contexto de devaluación cambiaria y fuerte crecimiento de la inflación. Posteriormente, los valores descendieron pero estableciéndose por encima del promedio, cerca del 19%.
+
+
+```{r estrategias, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Porcentaje de hogares que utilizan ahorros para vivir. Argentina urbana, 2016-2024 (trimestres)."
+#| label: fig-ahorros
+
+tabla <- eph_hogar %>%
+  group_by(ano_trim, V13) %>% 
+  tally(V13) %>% 
+  group_by(ano_trim) %>%
+  mutate(ahorro = n / sum(n)) %>% 
+  filter(V13 == 1) %>% 
+  select(-n)
+  
+tabla %>% 
+  ggplot(aes(x = ano_trim, y = ahorro, group = 1)) +
+  geom_line(size = .7) +
+  geom_point(size = 1.5) +
+  geom_text(data = . %>% filter(ano_trim %in% c("2024-I", "2020-II")),
+            aes(label = scales::percent(ahorro, accuracy = 0.1)), 
+            size = 3,
+            nudge_y = .01) +
+  labs(
+      # title = "Utilización de ahorros del hogar para vivir",
+      #  subtitle = "Argentina urbana, 2016-2024 (trimestres).",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_y_continuous(breaks = seq(0.1, .25, by = 0.05), limits = c(0.1, .25), 
+                     labels = scales::percent_format(accuracy = 1L))
+  
+
+```
+
+El análisis de la evolución del pluriempleo (definido como la proporción de ocupados con más de un empleo) revela un fenómeno estructural creciente en el mercado laboral argentino. Los datos muestran que, en el cuarto trimestre de 2024, se alcanzó el valor máximo de la serie histórica (12,2%), equivalente a 1,6 millones de trabajadores que recurren a múltiples ocupaciones para compensar la insuficiencia de ingresos de su empleo principal (@fig-pluri). Este registro no solo supera las cifras del año anterior, sino que consolida una tendencia alcista desde 2016, cuando la tasa se situaba en 9,1%.
+El incremento sostenido del pluriempleo sugiere dos dinámicas interrelacionadas. En primer lugar, un deterioro del poder adquisitivo de los salarios, evidenciado por la necesidad de complementar ingresos ante la erosión de la capacidad de consumo (como lo confirman indicadores como Capacidad de compra de canasta), y en segundo lugar, una flexibilización encubierta del mercado laboral, donde la multiplicidad de empleos opera como mecanismo de adaptación a la precarización. Este fenómeno adquiere especial relevancia en contextos de crisis, donde los hogares enfrentan mayores dificultades para cubrir necesidades básicas con sus ingresos.
+El pluriempleo récord en 2024 refleja fallas en la generación de empleo de calidad y en la protección social, con implicancias para el bienestar laboral y la productividad.
+
+
+```{r Pluriempleo, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución del pluriempleo. Argentina urbana, 2016-2024 (Anual)."
+#| label: fig-pluri
+
+eph %>%
+  filter(CH06 >= 18, ESTADO == 1, trim == "II" | trim == "IV") %>%
+  group_by(ano_trim, empleos_cant) %>%
+  tally(PONDERA) %>%
+  group_by(ano_trim) %>%
+  mutate(n = n/sum(n)) %>%
+  filter(empleos_cant == "Más de un empleo") %>%
+  ggplot(aes(x = as.character(ano_trim), y = n, group = 1)) +
+  geom_line(size = .7) +
+  geom_point(size = 1.5) +
+  ggrepel::geom_text_repel(data = . %>% filter(ano_trim %in% c("2016-II", "2024-IV")),
+            aes(label = scales::percent(n, accuracy = 0.1)), 
+            nudge_y = .001,
+            size = 3) +
+  labs(
+      # title = "Porcentaje de ocupados con pluriempleo",
+      #  subtitle = "Argentina urbana, 2016-2024 (Anual).",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 9, hjust = 1, angle = 45),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_y_continuous(breaks = seq(.05, .13, by = 0.01), limits = c(.05, .13), 
+                     labels = scales::percent_format(accuracy = 1L))
+
+
+```
+
+
+## Capacidad de compra de los ingresos
+
+Con el objetivo de poder medir de manera precisa la capacidad de compra de los ingresos de diferentes segmentos de la población, se construyó el indicador **Capacidad de compra de los ingresos** a partir del cual se calcula la cantidad de canastas (de hogar o individuales) que pueden comprarse con los ingresos corrientes de los hogares y de las personas (ingresos laborales y jubilaciones por ejemplo). El análisis de la evolución de este indicador a lo largo de la serie que inicia en 2016 permite ver el deterioro de ingresos ocurrido en los últimos años, especialmente en el último año. 
+Para la población en general, el resultado muestra que entre 2016-2024, los hogares argentinos pasaron de poder adquirir, en promedio, 2,01 CBT a solo 1,52 CBT (-24%) (ver @fig-peso-canasta).
+
+
+```{r Peso canasta, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de la capacidad de compra del ingreso total familiar medida en canastas. Argentina urbana, 2016-2024 (trimestres)"
+#| label: fig-peso-canasta
+
+eph %>% 
+  group_by(ANO4) %>% 
+  summarise(peso_canasta = weighted.mean(peso_canasta, PONDIH, na.rm = T)) %>% 
+  ggplot(aes(x = as.character(ANO4), y = peso_canasta, group = 1)) +
+  geom_point() +
+  geom_line() +
+  ggrepel::geom_text_repel(aes(label = scales::number(peso_canasta, accuracy = 0.01)), 
+                  size = 3,
+                  nudge_y = 0.01,
+                  show.legend = FALSE) +
+  labs(
+      # title = "Evolución de la capacidad de compra del ingreso total familiar medida en canastas",
+      #  subtitle = "Argentina urbana, 2016-2024. ",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 9),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_color_d3() +
+  scale_y_continuous(breaks = seq(1, 2.5, by = 0.5), limits = c(1, 2.5))
+
+
+```
+
+El indicador **capacidad de compra de los ingresos** para los hogares NO pobres muestra la cantidad de canastas (calculada para cada hogar) que puede comprar los *hogares no pobres* con sus ingresos totales y su evolución entre 2016-2024. 
+El resultado muestra que entre 2016-2024, los hogares NO POBRES argentinos pasaron de poder adquirir, en promedio, 2,62 CBT a solo 2,29 CBT (-13%).
+
+
+```{r Peso canasta no pobre, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de la capacidad de compra del ingreso total familiar medida en canastas. Argentina urbana, 2016-2024 (trimestres). Población no pobre"
+#| label: fig-peso-canasta-no-pobre
+
+eph %>% 
+  filter(pobreza_dic == 0) %>% 
+  group_by(ANO4) %>% 
+  summarise(peso_canasta = weighted.mean(peso_canasta, PONDIH, na.rm = T)) %>% 
+  ggplot(aes(x = as.character(ANO4), y = peso_canasta, group = 1)) +
+  geom_point() +
+  geom_line() +
+  ggrepel::geom_text_repel(aes(label = scales::number(peso_canasta, accuracy = 0.01)), 
+                  size = 3,
+                  nudge_y = 0.01,
+                  show.legend = FALSE) +
+  labs(
+      # title = "Evolución de la capacidad de compra del ingreso total familiar medida en canastas",
+      #  subtitle = "Argentina urbana, 2016-2024. Población no pobre.",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 9),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_color_d3() +
+  scale_y_continuous(breaks = seq(2, 3, by = 0.2), limits = c(2, 3))
+
+
+```
+El indicador **capacidad de compra de los ingresos** para los asalariados muestra la cantidad de canastas individuales que pueden comprar los asalariados en base a los ingresos de su ocupación principal. Los resultados muestran que la capacidad de compra del conjunto de los asalariados se encuentra en el nivel más bajo de la serie desde 2016. Mientras que en el año 2016 los asalariados, en promedio, podían comprar 2,9 canastas individuales, en el último trimestre de 2024 esta capacidad se ha reducido a 2,1 (mostrando un desplome del 28% entre 2016 y 2024).
+
+```{r Peso canasta asalariados, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de la capacidad de compra del ingreso laboral medida en canastas. Argentina urbana, 2016-2024 (trimestres). Población asalariada"
+#| label: fig-peso-canasta-asalariados
+
+
+eph %>% 
+  filter(CAT_OCUP == 3) %>% 
+  mutate(peso_canastap21 = P21 / (adequi * CBT)) %>% 
+  group_by(ANO4) %>% 
+  summarise(peso_canasta = weighted.mean(peso_canastap21, PONDIIO, na.rm = T)) %>% 
+  ggplot(aes(x = as.character(ANO4), y = peso_canasta, group = 1)) +
+  geom_point() +
+  geom_line() +
+  ggrepel::geom_text_repel(aes(label = scales::number(peso_canasta, accuracy = 0.01)), 
+                  size = 3,
+                  nudge_y = 0.01,
+                  show.legend = FALSE) +
+  labs(
+      # title = "Evolución de la capacidad de compra del ingreso laboral medida en canastas",
+      #  subtitle = "Argentina urbana, 2016-2024. Población asalariada.",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 9),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_color_d3() +
+  scale_y_continuous(breaks = seq(2, 3.2, by = 0.2), limits = c(2, 3.2))
+
+
+```
+Al analizar la capacidad de compra de los ingresos de los asalariados considerando la calidad del empleo, se observa que tanto los formales como los informales empeoraron su situación. Entre 2016-2024 los formales cayeron de 3,84 a 2,81 (-27%) y los informales de 1,66 a 1,17 (-30%).
+
+```{r Peso canasta asalariados formal informal, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de la capacidad de compra del ingreso laboral medida en canastas. Argentina urbana, 2016-2024 (trimestres). Población asalariada según calidad del empleo"
+#| label: fig-peso-canasta-asalariados-formal-informal
+
+
+eph %>% 
+  filter(CAT_OCUP == 3, !is.na(PP07H)) %>% 
+  mutate(peso_canastap21 = P21 / (adequi * CBT)) %>% 
+  group_by(ANO4, PP07H) %>% 
+  summarise(peso_canasta = weighted.mean(peso_canastap21, PONDIIO, na.rm = T)) %>% 
+  ggplot(aes(x = as.character(ANO4), y = peso_canasta, fill = as.factor(PP07H))) +
+  geom_col(position = "dodge", alpha = .7) +
+  geom_text(aes(label = scales::number(peso_canasta, accuracy = 0.01),
+                 y = peso_canasta - 0.2), 
+            position = position_dodge(.9),
+            size = 3) +
+  labs(
+      # title = "Evolución de la capacidad de compra del ingreso laboral medida en canastas",
+      #  subtitle = "Argentina urbana, 2016-2024. Población asalariada según calidad del empleo.",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 9),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_fill_d3(labels = c("Formales", "Informales")) +
+  scale_y_continuous(breaks = seq(0, 4, by = 0.5), limits = c(0, 4),
+                     labels = scales::number_format(accuracy = 0.01))
+
+
+```
+
+
+En la evolución de la capacidad de compra de los asalariados formales según rama de actividad puede observarse la heterogeneidad del impacto en los diferentes sectores (@fig-peso-canasta-rama1). Sin embargo, la tendencia del deterioro de ingresos afecta al conjunto de las ramas.
+Al analizar la evolución de la capacidad de compra de los *asalariados formales de las ramas ligadas al sector privado* como industria manufacturera, comercio, construcción y alojamiento y servicio de comidas (las cuales representan cerca del 40% del total de ocupados) se observa una tendencia negativa en la capacidad de compra de sus salarios.
+La rama que más empeoró la capacidad de sus ingresos en el periodo 2016-2024 es Alojamiento y servicios de comida ya que registra una pérdida de 31% en su capacidad de compra, le sigue Industria manufacturera registrando una pérdida de 25%, Comercio del 22% y Construcción del 19%.
+Los asalariados formales de la rama Alojamiento y servicios de comida en 2016 podían comprar 2,8 canastas individuales y ahora en 2024 pueden comprar 1,9, registrando una baja del 31% de sus ingresos en términos relativos.
+Los asalariados formales de la industria manufacturera también registran un deterioro importante de sus ingresos en relación a la capacidad de compra. En 2016 podían comprar 3,8 canastas individuales y ahora en 2024 pueden comprar 2,8 (-25%).
+Por su parte, los asalariados formales de la rama construcción sufrieron un deterioro de su capacidad de compra del 19%. En 2016 podían comprar 3,1 canastas individuales con sus ingresos laborales de la ocupación principal y actualmente pueden comprar 2,5.
+Lo mismo se observa en los asalariados formales de la rama Comercio, quienes en 2016 podían comprar en promedio 3,4 canastas individuales y ahora pueden comprar 2,7 (-22%)
+
+
+```{r Peso canasta asalariados rama, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de la capacidad de compra del ingreso laboral medida en canastas. Argentina urbana, 2016-2024 (trimestres). Ramas de actividad asociadas al sector privado"
+#| label: fig-peso-canasta-rama1
+
+
+eph %>% 
+  filter(CAT_OCUP == 3, PP07H == 1, rama2 %in% c("Industria manufacturera",
+                                                 "Comercio al por mayor y al por menor; reparación de vehículo",
+                                                 "Construcción",
+                                                 "Alojamiento y servicios de comidas")) %>% 
+  mutate(peso_canastap21 = P21 / (adequi * CBT)) %>% 
+  group_by(ANO4, rama2) %>% 
+  summarise(peso_canasta = weighted.mean(peso_canastap21, PONDIIO, na.rm = T)) %>% 
+  ggplot(aes(x = as.character(ANO4), y = peso_canasta, color = rama2, group = rama2)) +
+  geom_line(linewidth = .8) +
+  geom_point(size = 1.5) +
+  ggrepel::geom_text_repel(aes(label = scales::number(peso_canasta, accuracy = 0.1)), 
+                  size = 3,
+                  nudge_y = 0.1,
+                  show.legend = FALSE) +
+  labs(
+      # title = "Evolución de la capacidad de compra del ingreso laboral medida en canastas",
+      #  subtitle = "Argentina urbana, 2016-2024. Ramas de actividad asociadas al sector privado",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 9),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_color_d3(labels = function(x) str_wrap(x, width = 25)) +
+  scale_y_continuous(breaks = seq(0, 4.5, by = 0.5), limits = c(1.5, 4.5),
+                     labels = scales::number_format(accuracy = 0.01))
+
+
+```
+
+Al analizar la evolución de la capacidad de compra de los *asalariados formales de las ramas ligadas al sector público* como Administración Pública, Enseñanza y Salud se observa que el deterioro salarial es significativamente más profundo que en las ramas asociadas al sector público.
+La @fig-peso-canasta-rama2 presenta la trayectoria del indicador de capacidad de compra de los ingresos (que mide la cantidad de canastas básicas individuales adquiribles con los ingresos laborales de la ocupación principal de los asalariados) en tres ramas clave del sector público: enseñanza, salud y administración pública. 
+Los datos revelan un deterioro sostenido de la capacidad adquisitiva en estas actividades entre 2016 y 2024, con una caída generalizada desde valores cercanos a 3,6-4,6 canastas a inicios del período hasta rangos de 2,4-3 hacia 2024. Este descenso, particularmente abrupto a partir de 2023, sugiere un efecto combinado de la erosión salarial real frente a la inflación y ajustes heterogéneos por sector. La rama de enseñanza exhibe el mayor deterioro. La contracción del indicador, especialmente pronunciada en el último año,  subraya la vulnerabilidad económica de los asalariados públicos, cuya capacidad de consumo se ha visto comprometida de manera crítica, con implicancias para su bienestar y la calidad de los servicios esenciales. 
+
+::: {.callout-important}
+Entre los sectores más afectados por la pérdida de capacidad adquisitiva de los ingresos destacan la enseñanza y la salud, ambos caracterizados por una elevada feminización de su fuerza laboral, con porcentajes de trabajadoras mujeres del 75% y 69%, respectivamente. A estos se suma el servicio doméstico, sector históricamente precarizado que presenta la tasa de informalidad más alta del mercado laboral argentino (77%), los salarios más bajos y una composición de género prácticamente exclusivamente femenina (98%).
+:::
+
+
+```{r Peso canasta asalariados rama público, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de la capacidad de compra del ingreso laboral medida en canastas. Argentina urbana, 2016-2024 (trimestres). Ramas de actividad asociadas al sector público"
+#| label: fig-peso-canasta-rama2
+
+eph %>% 
+  filter(CAT_OCUP == 3, PP07H == 1, rama2 %in% c("Enseñanza",
+                                                 "Salud humana y servicios sociales",
+                                                 "Administración pública y defensa; planes de seguro social ob")) %>% 
+  mutate(peso_canastap21 = P21 / (adequi * CBT)) %>% 
+  group_by(ANO4, rama2) %>% 
+  summarise(peso_canasta = weighted.mean(peso_canastap21, PONDIIO, na.rm = T)) %>% 
+  ggplot(aes(x = as.character(ANO4), y = peso_canasta, color = rama2, group = rama2)) +
+  geom_line(linewidth = .8) +
+  geom_point(size = 1.5) +
+  ggrepel::geom_text_repel(aes(label = scales::number(peso_canasta, accuracy = 0.1)), 
+                  size = 3,
+                  nudge_y = 0.1,
+                  show.legend = FALSE) +
+  labs(
+      # title = "Evolución de la capacidad de compra del ingreso laboral medida en canastas",
+      #  subtitle = "Argentina urbana, 2016-2024. Ramas de actividad asociadas al sector público",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 9),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_color_d3(labels = function(x) str_wrap(x, width = 25)) +
+  scale_y_continuous(breaks = seq(0, 5, by = 0.5), limits = c(1.5, 5),
+                     labels = scales::number_format(accuracy = 0.01))
+
+```
+
+El indicador **capacidad de compra de los ingresos**, en este caso, calcula cuántas canastas básicas individuales puede adquirir un jubilado con su haber jubilatorio.
+La @fig-peso-canasta-jubilados revela un colapso sostenido de la capacidad adquisitiva de los adultos mayores en Argentina. La serie temporal (2016-2024) muestra que los jubilados pasaron de poder adquirir 2,8 canastas básicas en 2017 a apenas 1,5 canastas en 2024, lo cual representa una caída del 46% en términos reales.
+La caída fue más pronunciada que en otros grupos (por ejemplo asalariados formales: -27%), evidenciando una doble vulnerabilidad de los jubilados: por edad y por dependencia de ingresos fijos no indexados.
+Cabe destacar que, en promedio, los adultos mayores de 65 años cobran $438 mil pesos mensuales de jubilación (equivalente a 368 USD mensuales^[Fuente: Banco Nación Argentina consultado el 04/05/2025]).
+
+
+```{r Peso canasta jubilados, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de la capacidad de compra del ingreso jubilatorio medida en canastas. Argentina urbana, 2016-2024 (trimestres). Población mayor de 65 años"
+#| label: fig-peso-canasta-jubilados
+
+eph %>% 
+  filter(CH06 > 65) %>% 
+  group_by(ANO4) %>% 
+  mutate(peso_canasta_jub = ifelse(ano_trim != "2024-IV", V2_M / (adequi * CBT),
+                                   (V2_01_M + V2_02_M) / (adequi * CBT))) %>% 
+  summarise(peso_canasta = weighted.mean(peso_canasta_jub, PONDII, na.rm = T)) %>% 
+  ggplot(aes(x = as.character(ANO4), y = peso_canasta, group = 1)) +
+  geom_point() +
+  geom_line() +
+  ggrepel::geom_text_repel(aes(label = scales::number(peso_canasta, accuracy = 0.01)), 
+                  size = 3,
+                  nudge_y = 0.01,
+                  show.legend = FALSE) +
+  labs(
+      # title = "Evolución de la capacidad los ingresos jubilatorios medida en canastas",
+      #  subtitle = "Argentina urbana, 2016-2024. Población mayor de 65 años",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 9),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_color_d3(labels = function(x) str_wrap(x, width = 25)) +
+  scale_y_continuous(breaks = seq(1, 3, by = 0.5), limits = c(1, 3),
+                     labels = scales::number_format(accuracy = 0.01))
+
+
+```
+
+## Trayectorias de salida de la pobreza
+
+
+
+```{r Construcción de paneles, message=FALSE, warning=FALSE, echo=FALSE}
+# Ponderador sin elevar
+eph <- eph %>% 
+  group_by(ano_trim) %>% 
+  mutate(pondera_sum = sum(PONDERA),
+         sum = n(),
+         pondera_sin_elevar = (PONDERA / pondera_sum)*sum,
+         pondih_sum = sum(PONDIH),
+         pondih_sin_elevar = (PONDIH / pondih_sum)*sum) %>% 
+  ungroup()
+
+# Paneles
+eph2024 <- eph %>% 
+  filter(ANO4 == 2024 | ANO4 == 2023) %>% 
+  mutate(pobreza_f = factor(pobreza_dic, labels = c("No pobre", "Pobre")))
+
+pool <- organize_panels(eph2024, variables = c("ESTADO", "pobreza_f", "empleos_cant", "INTENSI", "informal", "rama2", "sector", "horas", "cobhe_f",
+                                               "ocupados", "pondih_sin_elevar", "pondera_sin_elevar"), 
+                        window = 'trimestral')
+
+pool <- subset(pool, consistencia == TRUE)
+
+# haven::write_sav(pool, "C:/Users/josed/Downloads/paneles_2023_2024.sav")
+
+```
+
+El análisis del panel de la **EPH**, es decir de las personas que fueron encuestadas durante dos trimestres consecutivos, permite ver la trayectoria de los individuos y hogares que cambiaron su situación de pobreza entre el segundo y tercer trimestre de 2024, pasando de ser pobres a ser no pobres, identificando algunos factores explicativos de dicha trayectoria.
+
+>En coincidencia con los datos analizados hasta aquí, el análisis del segmento de los que *salieron de la pobreza* muestra entre sus principales resultados que dentro de ese grupo creció la proporción de ocupados, aumentó la cantidad de ocupados por hogar, creció el pluriempleo, aumentó la proporción de sobreocupados, aumentó el promedio de hs semanales trabajadas y aumentó la informalidad.
+
+Si consideramos la trayectoria ocupacional de los que salieron de la pobreza, resulta relevante señalar que 1 de cada 5 personas que pasaron de estar inactivos a estar ocupados son adultos mayores de 65 años.
+En síntesis, el análisis del segmento de quienes salieron de la pobreza entre el segundo y el tercer trimestre de 2024 muestra que lo lograron especialmente a través de incrementar horas de trabajo (sobreocupación), sumar ocupaciones (pluriempleo) e incorporar más miembros del hogar al mercado de trabajo.
+
+
+```{r Análisis de paneles, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Trayectorias de entrada y salida de la pobreza. Argentina urbana, 2024 (2do y 3er trimestre)."
+#| label: fig-trayectorias-pobreza
+
+pool %>% 
+    filter(Periodo == "2024 Q2", !is.na(pobreza_f), !is.na(pobreza_f_t1)) %>%
+    group_by(pobreza_f, pobreza_f_t1) %>%
+    tally() %>% 
+    ungroup() %>% 
+    mutate(percent = n/sum(n)) %>% 
+    ggplot(aes(y = percent, axis1 = pobreza_f, axis2 = pobreza_f_t1)) +
+    geom_alluvium(aes(fill = pobreza_f), width = .5) +
+    geom_stratum(width = .2, alpha = .1, size = .4) +
+    geom_text(aes(label = paste0(..stratum.., "\n", scales::percent(..count.., accuracy = .1))), stat = "stratum", size = 3) +
+    scale_fill_d3() +
+    theme_minimal(base_size = 10) +
+    theme(
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      axis.text.y = element_text(size = 9),
+      axis.text.x = element_text(size = 9),
+      legend.position = "none",
+      plot.title = element_text(size = 10)
+    ) +
+    scale_x_discrete(limits = c("2024-II", "2024-III"), expand = c(.05, .05)) +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1L), breaks = seq(0, 1, by = 0.2))
+
+
+
+```
+
+
+
+## Advertencias metodológicas
+
+Como último punto nos interesa retomar la discusión metodológica que frecuentemente se plantea en torno a la medición oficial de la pobreza con la **EPH** y que ha ganado más énfasis en el último año a raíz del rápido aumento y dismución en un corto período de tiempo. Parte de esta discusión puede encontrarse ampliada en @Schteingart2025 y @Tornarolli2024.
+
+En primer lugar, nos interesa remarcar el importante crecimiento que se continua observando respecto a la proporción de personas que no responden sobre sus ingresos en la encuesta. En el último trimestre de 2024, el 20% de los ocupados no declararon ingresos laborales en su ocupación principal (P21) y el 22% no declararon ingresos laborales totales (P47T). A su vez, como se observa en la @fig-ingresos-clase, la proporción de personas que no declaran ingresos se distribuye diferencialmente por clase social, siendo los sectores superiores los que presentan una tasa de no respuesta superior (28%).  
+
+
+```{r Ingresos no declarados, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Proporción de personas que no declararon ingresos. Argentina urbana, 2016-2024 (trimestres). Población ocupada"
+#| label: fig-ingresos-no-declarados
+
+
+tabla <- eph %>%
+  filter(ESTADO == 1) %>% 
+  group_by(ano_trim) %>% 
+  mutate(imputados_p21 = ifelse(P21 == -9, 1, 0),
+         imputados_p47t = ifelse(P47T == -9, 1, 0)) %>% 
+  summarise(imputados_p21 = mean(imputados_p21, na.rm = T),
+            imputados_p47t = mean(imputados_p47t, na.rm = T)) %>% 
+  pivot_longer(cols = c(imputados_p21, imputados_p47t), names_to = "situacion", values_to = "imputados")
+
+tabla %>% 
+  ggplot(aes(x = ano_trim, y = imputados, color = situacion, group = situacion)) +
+  geom_line() +
+  labs(
+      # title = "Proporción de imputados por trimestre por no declaración de ingresos",
+      #  subtitle = "Población ocupada. Argentina urbana, 2016-2024 (trimestres)",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.",
+       x = "Año-trimestre",
+       y = "Proporción de imputados",
+       color = "Tipo de ingresos") +
+  theme(
+    plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.text.x = element_text(angle = 45, size = 8, hjust = 1),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 9),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_color_d3(labels=c("Ocupación principal", "Total personal")) +
+  scale_y_continuous(labels = scales::percent, 
+                     breaks = seq(0, .25, 0.02), 
+                     limits = c(0, .25))
+
+
+
+```
+
+```{r Ingresos no declarados por clase, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Proporción de personas que no declararon ingresos según clase social. Argentina urbana, 2016-2024 (trimestres). Población ocupada"
+#| label: fig-ingresos-clase
+
+
+eph %>%
+  filter(ESTADO == 1, !is.na(cobhe_f)) %>% 
+  group_by(ano_trim, cobhe_f) %>% 
+  mutate(imputados_p21 = ifelse(P21 == -9, 1, 0)) %>% 
+  summarise(imputados_p21 = mean(imputados_p21, na.rm = T)) %>% 
+  ggplot(aes(x = ano_trim, y = imputados_p21, color = cobhe_f, group = cobhe_f)) +
+  geom_line() +
+  labs(
+      # title = "Proporción de imputados por trimestre por no declaración de ingresos según clase social",
+      #  subtitle = "Población ocupada. Argentina urbana, 2016-2024 (trimestres)",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC.",
+       x = "Año-trimestre",
+       y = "Proporción de imputados",
+       color = "Clase social") +
+  theme(
+    plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.height=unit(1, "cm"),
+        axis.text.x = element_text(angle = 45, size = 8, hjust = 1),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 9),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_color_d3(labels = function(x) str_wrap(x, width = 20)) +
+  scale_y_continuous(labels = scales::percent, 
+                     breaks = seq(0, .38, 0.02), 
+                     limits = c(0, .38)) +
+  guides(color= guide_legend(byrow = TRUE))
+```
+Otra cuestión metodológica que ha permeado en la opinión pública es respecto a la validez de la canasta básica utilizada para ir actualizando el valor de la *canasta básica alimentaria* (CBA) y la *canasta básica total* (CBT) a partir de la cual se mide la pobreza. Actualmente el **INDEC** pondera el peso de cada bien y servicio que compone el índice de precios al consumidor (IPC) a partir de la Encuesta Nacional de Gastos de los Hogares (ENGHo) 2004-2005 ajustada a precios relativos de 2016. A diferencia del **INDEC**, el Instituto de Estadísticas y Censos de la Ciudad Autónoma de Buenos Aires (IDECBA) desde 2022, actualiza la CBA y la CBT a través de un IPC propio que toma como ponderadores de referencia a la estructura de gastos derivada de la ENGHo 2017-2018. En este sentido, las canatas del IDECBA serían más cercanas a la estructura de consumo actual.  
+
+Para analizar la existencia de diferencias entre ambas formas de medir la pobreza, utilizando las bases usuarias de la Encuesta de Ocupación, Trabajo e Ingresos (ETOI) de la CABA, utilizamos la valorización de las canastas siguiendo la metodología del IDECBA y la del INDEC (@fig-comparacion).
+
+En este sentido, la pobreza y la indigencia no solo muestran porcentajes distintos de acuerdo a cómo son valorizadas, existiendo una brecha de casi 6 pp. en el primer caso, con mayor fuerza desde 2024, sino que también denotan ciertos matices respecto a su evolución. Utilizando la CBT de INDEC, la pobreza en la CABA hacia fines de 2024 alcanzaba valores casi similares a los de comienzos de 2022, mientras que utlizando la CBT de IDECBA, la pobreza hacia fines de 2024 es algo inferior al tercer trimestre de 2023.  
+
+
+```{r Comparación con ETOI, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de la pobreza según valorización de la CBA y CBT del IDECBA y del INDEC. Ciudad Autónoma de Buenos Aires, 2022-2024 (trimestres)."
+#| label: fig-comparacion
+
+etoi221 <- tempfile()
+download.file("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2022/08/etoi221_base_usuarios.zip",etoi221)
+etoi221i <- read.csv(unz(etoi221, "etoi221_usu_ind.txt"), sep = ";")
+etoi221h <- read.csv(unz(etoi221, "etoi221_usu_hog.txt"), sep = ";")
+
+etoi222 <- tempfile()
+download.file("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2022/11/etoi222_base_usuarios.zip",etoi222)
+etoi222i <- read.csv(unz(etoi222, "etoi222_usu_ind.txt"), sep = ";")
+etoi222h <- read.csv(unz(etoi222, "etoi222_usu_hog.txt"), sep = ";")
+
+etoi223 <- tempfile()
+download.file("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2023/01/etoi223_-base_usuarios.zip",etoi223)
+etoi223i <- read.csv(unz(etoi223, "etoi223_ base_usuarios/etoi223_usu_ind.txt"), sep = ";")
+etoi223h <- read.csv(unz(etoi223, "etoi223_ base_usuarios/etoi223_usu_hog.txt"), sep = ";")
+
+etoi224 <- tempfile()
+download.file("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2023/04/etoi224_base_usuarios.zip",etoi224)
+etoi224i <- read.csv(unz(etoi224, "etoi224_usu_ind.txt"), sep = ";")
+etoi224h <- read.csv(unz(etoi224, "etoi224_usu_hog.txt"), sep = ";")
+
+etoi231 <- tempfile()
+download.file("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2023/08/etoi231_base_usuarios.zip",etoi231)
+etoi231i <- read.csv(unz(etoi231, "etoi231_usu_ind.txt"), sep = ";")
+etoi231h <- read.csv(unz(etoi231, "etoi231_usu_hog.txt"), sep = ";")
+
+etoi232 <- tempfile()
+download.file("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2023/10/etoi232_base_usuarios.zip",etoi232)
+etoi232i <- read.csv(unz(etoi232, "etoi232_usu_ind.txt"), sep = ";")
+etoi232h <- read.csv(unz(etoi232, "etoi232_usu_hog.txt"), sep = ";")
+
+etoi233 <- tempfile()
+download.file("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2024/01/etoi233_base_usuarios.zip",etoi233)
+etoi233i <- read.csv(unz(etoi233, "etoi233_usu_ind.txt"), sep = ";")
+etoi233h <- read.csv(unz(etoi233, "etoi233_usu_hog.txt"), sep = ";")
+
+etoi234 <- tempfile()
+download.file("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2024/05/etoi234_base_usuarios.zip",etoi234)
+etoi234i <- read.csv(unz(etoi234, "etoi234_usu_ind.txt"), sep = ";")
+etoi234h <- read.csv(unz(etoi234, "etoi234_usu_hog.txt"), sep = ";")
+
+etoi241 <- tempfile()
+download.file("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2024/07/etoi241_base_usuarios.zip",etoi241)
+etoi241i <- read.csv(unz(etoi241, "etoi241_usu_ind.txt"), sep = ";")
+etoi241h <- read.csv(unz(etoi241, "etoi241_usu_hog.txt"), sep = ";")
+
+etoi242 <- tempfile()
+download.file("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2024/10/etoi242_base_usuarios.zip",etoi242)
+etoi242i <- read.csv(unz(etoi242, "etoi242_usu_ind.txt"), sep = ";")
+etoi242h <- read.csv(unz(etoi242, "etoi242_usu_hog.txt"), sep = ";")
+
+etoi243 <- tempfile()
+download.file("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2025/01/etoi243_base_usuarios.zip",etoi243)
+etoi243i <- read.csv(unz(etoi243, "etoi243_usu_ind.txt"), sep = ";")
+etoi243h <- read.csv(unz(etoi243, "etoi243_usu_hog.txt"), sep = ";")
+
+etoi244 <- tempfile()
+download.file("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2025/04/etoi244_base_usuarios.zip",etoi244)
+etoi244i <- read.csv(unz(etoi244, "etoi244_usu_ind.txt"), sep = ";")
+etoi244h <- read.csv(unz(etoi244, "etoi244_usu_hog.txt"), sep = ";")
+
+
+
+etoi221 <- etoi221i %>% 
+  left_join(etoi221h, by = c("id", "nhogar", "zona")) %>% 
+  mutate(anio_trim = "2022-1",
+         ANO4 = 2022,
+         TRIMESTRE = 1)
+
+etoi222 <- etoi222i %>%
+  left_join(etoi222h, by = c("id", "nhogar", "zona")) %>% 
+  mutate(anio_trim = "2022-2",
+         ANO4 = 2022,
+         TRIMESTRE = 2)
+
+etoi223 <- etoi223i %>%
+  left_join(etoi223h, by = c("id", "nhogar", "zona")) %>% 
+  mutate(anio_trim = "2022-3",
+         ANO4 = 2022,
+         TRIMESTRE = 3)
+
+etoi224 <- etoi224i %>%
+  left_join(etoi224h, by = c("id", "nhogar", "zona")) %>% 
+  mutate(anio_trim = "2022-4",
+         ANO4 = 2022,
+         TRIMESTRE = 4)
+
+etoi231 <- etoi231i %>%
+  left_join(etoi231h, by = c("id", "nhogar", "zona")) %>% 
+  mutate(anio_trim = "2023-1",
+         ANO4 = 2023,
+         TRIMESTRE = 1)
+
+etoi232 <- etoi232i %>%
+  left_join(etoi232h, by = c("id", "nhogar", "zona")) %>% 
+  mutate(anio_trim = "2023-2",
+         ANO4 = 2023,
+         TRIMESTRE = 2)
+
+etoi233 <- etoi233i %>%
+  left_join(etoi233h, by = c("id", "nhogar", "zona")) %>% 
+  mutate(anio_trim = "2023-3",
+         ANO4 = 2023,
+         TRIMESTRE = 3)
+
+etoi234 <- etoi234i %>%
+  left_join(etoi234h, by = c("id", "nhogar", "zona")) %>% 
+  mutate(anio_trim = "2023-4",
+         ANO4 = 2023,
+         TRIMESTRE = 4)
+
+etoi241 <- etoi241i %>%
+  left_join(etoi241h, by = c("id", "nhogar", "zona")) %>% 
+  mutate(anio_trim = "2024-1",
+         ANO4 = 2024,
+         TRIMESTRE = 1)
+
+etoi242 <- etoi242i %>%
+  left_join(etoi242h, by = c("id", "nhogar", "zona")) %>% 
+  mutate(anio_trim = "2024-2",
+         ANO4 = 2024,
+         TRIMESTRE = 2)
+
+etoi243 <- etoi243i %>%
+  left_join(etoi243h, by = c("id", "nhogar", "zona")) %>% 
+  mutate(anio_trim = "2024-3",
+         ANO4 = 2024,
+         TRIMESTRE = 3)
+
+etoi244 <- etoi244i %>%
+  left_join(etoi244h, by = c("id", "nhogar", "zona")) %>% 
+  mutate(anio_trim = "2024-4",
+         ANO4 = 2024,
+         TRIMESTRE = 4)
+
+etoi <- bind_rows(etoi221, etoi222, etoi223, etoi224, etoi231, etoi232, etoi233, etoi234, etoi241, etoi242, etoi243, etoi244)
+
+rm(etoi221, etoi222, etoi223, etoi224, etoi231, etoi232, etoi233, etoi234, etoi241, etoi242, etoi243, etoi221i, etoi221h, etoi222i, etoi222h, etoi223i, etoi223h, etoi224i, etoi224h, etoi231i, etoi231h, etoi232i, etoi232h, etoi233i, etoi233h, etoi234i, etoi234h, etoi241i, etoi241h, etoi242i, etoi242h, etoi243i, etoi243h, etoi244i, etoi244h)
+
+etoi <- etoi %>% 
+  mutate(CH04 = sexo,
+         CH06 = edad,
+         REGION = 1,
+         CODUSU = id,
+         NRO_HOGAR = nhogar,
+         ITF = itfb_2,
+         PONDIH = fexp.x)
+
+# Construcción de variables-----------------
+
+etoi <- etoi %>% 
+  mutate(pobreza_dic = ifelse(i_pobreza == 1 | i_pobreza == 2, 1, 0),
+         indigente = ifelse(i_pobreza == 1, 1, 0))
+
+etoi <- calculate_poverty(base = etoi, basket = canastas, print_summary = F)
+
+etoi <- etoi %>% 
+  mutate(pobreza_indec = case_when(situacion %in% c("pobre", "indigente") ~ 1,
+                                 situacion %in% "no_pobre" ~ 0),
+         indigente_indec = case_when(situacion == "indigente" ~ 1,
+                               TRUE ~ 0))
+
+etoi %>%
+  group_by(anio_trim) %>% 
+  summarise(pobreza_IDECBA = weighted.mean(pobreza_dic, fexp.x, na.rm = T),
+            indigencia_IDECBA = weighted.mean(indigente, fexp.x, na.rm = T),
+            pobreza_INDEC = weighted.mean(pobreza_indec, fexp.x, na.rm = T),
+            indigencia_INDEC = weighted.mean(indigente_indec, fexp.x, na.rm = T)) %>% 
+  pivot_longer(cols = c(pobreza_IDECBA, indigencia_IDECBA, pobreza_INDEC, indigencia_INDEC), 
+               names_to = "situacion", values_to = "porcentaje") %>% 
+  ggplot(mapping = aes(x = as.character(anio_trim), y = porcentaje, colour = situacion,
+                       linetype = situacion, group = situacion)) +  
+  geom_point(size = 2) +
+  geom_line(linewidth = .7) +
+  geom_text(data = . %>% filter(anio_trim == "2024-4"),
+            aes(label = scales::percent(porcentaje, accuracy = 0.1)),
+            size = 3.3,
+            nudge_y = 0.02,
+            nudge_x = 0.1,
+            show.legend = FALSE) +
+  labs(
+      # title = "Pobreza e indigencia en CABA",
+      #  subtitle = "Comparación según cálculo de LI y LP de IDECBA e INDEC",
+       caption = "Fuente: elaboración propia en base a ETOI - IDECBA",
+       y = "Porcentaje",
+       x = "Año-trimestre") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 11),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_y_continuous(breaks = seq(0, .4, by = 0.05), limits = c(0, .4), 
+                     labels = scales::percent_format(accuracy = 1L)) +
+  scale_color_manual(values = c("pobreza_IDECBA" = "lightblue3", 
+                                "indigencia_IDECBA" = "red3", 
+                                "pobreza_INDEC" = "lightblue3", 
+                                "indigencia_INDEC" = "red3"),
+                     labels = c("CBA IDECBA", "CBA INDEC", "CBT IDECBA", "CBT INDEC"))+
+  scale_linetype_manual(values = c("pobreza_IDECBA" = "solid", 
+                                   "indigencia_IDECBA" = "solid", 
+                                   "pobreza_INDEC" = "dashed", 
+                                   "indigencia_INDEC" = "dashed"),
+                        labels = c("CBA IDECBA", "CBA INDEC", "CBT IDECBA", "CBT INDEC"))
+
+
+
+```
+Por último, hemos hecho una revisión de otras fuentes de datos que registran la evolución de ingresos, para evaluar así, la consistencia de los resultados arrojados por la EPH. De esta forma, a partir de la información del Sistema Integrado Previsional Argentino (SIPA), en donde se registran los ingresos laborales de todos los trabajadores formales, hemos comparado cómo evoluciona dicha variable en relación a su medición en la EPH, para el sector privado asalariado.
+
+Así es que en la @fig-comparacion-sipa, se observa que la brecha de ingresos promedio de los asalariados del sector privado entre SIPA y EPH, siempre es favorable al registro administrativo, pero en el último período dicha distancia se ha achicado relativamente, lo que podría estar explicando una mejor captación de los ingresos declarados por parte de la EPH.
+
+```{r Comparación SIPA, message=FALSE, warning=FALSE, echo=FALSE}
+#| fig.cap: "Evolución de la brecha de ingresos promedio de los asalariados del sector privado entre SIPA y EPH. Argentina urbana, 2017-2024 (cuarto trimestre)."
+#| label: fig-comparacion-sipa
+
+sipa <- read.csv("https://infra.datos.gob.ar/catalog/sspm/dataset/153/distribution/153.1/download/remuneracion-bruta-asalariados-registrados-sector-privado-mensual-pesos-base-2009.csv")
+
+sipa <- sipa %>%
+  mutate(
+    indice_tiempo = ymd(sipa$indice_tiempo),
+    anio = year(indice_tiempo),
+    mes = month(indice_tiempo),
+    anio_ajustado = if_else(mes == 12, anio + 1, anio),
+    trimestre = case_when(
+      mes %in% c(12, 1, 2) ~ "I",
+      mes %in% c(3, 4, 5) ~ "II",
+      mes %in% c(6, 7, 8) ~ "III",
+      mes %in% c(9, 10, 11) ~ "IV"),
+    ano_trim = paste0(anio_ajustado, "-", trimestre)) %>%
+  filter(indice_tiempo >= "2016-03-01" & indice_tiempo <= "2024-11-01")
+
+sipa <- sipa %>% 
+  left_join(ipc, by = "ano_trim")
+
+
+#Brecha
+
+ingresos_eph <- eph %>% 
+  filter(ESTADO == 1, CAT_OCUP == 3, PP04A > 1, trim == "IV") %>% 
+  group_by(ano_trim) %>%
+  summarise(ingresos_eph = weighted.mean(ing_lab, PONDIIO, na.rm = T))
+
+ingresos_sipa <- sipa %>%
+  filter(trimestre == "IV") %>%
+  group_by(ano_trim) %>% 
+  summarise(ingresos_sipa = mean(asalariados_priv_remuneracion_promedio, na.rm = T))
+
+ingresos <- left_join(ingresos_eph, ingresos_sipa, by = "ano_trim")
+
+ingresos <- ingresos %>% 
+  mutate(brecha = (ingresos_sipa - ingresos_eph) / ingresos_sipa)
+
+ingresos %>% 
+  ggplot(aes(x = ano_trim, y = brecha, group = 1)) +
+  geom_point() +
+  geom_line() +
+  geom_text(aes(label = scales::percent(brecha, accuracy = 0.1)), 
+            position = position_nudge(y = .01),
+            size = 3) +
+  labs(
+      # title = "Evolución de la brecha de los ingresos promedio de los asalariados del \nsector privado entre SIPA y EPH",
+      #  subtitle = "Argentina urbana, 2017-2024 (cuarto trimestre).",
+       caption = "Fuente: elaboración propia en base a SIPA e INDEC.") +
+  theme(plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 11),
+        legend.key.height=unit(1, "cm"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10),
+        plot.caption = element_text(size = 9, hjust = 1),
+        panel.grid = element_line(size = .2),
+        strip.text = element_text(face = "bold"),
+        legend.background = element_blank()) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L), 
+                     breaks = seq(.4, .55, 0.01), 
+                     limits = c(.4, .55))
+
+
+```
+
+
+## Conclusiones
+
+En un contexto social marcado por una desaceleración inflacionaria en comparación con 2023, se configuran dinámicas particulares en la estructura social argentina. El análisis de la pobreza desde su dimensión de umbral adquiere relevancia metodológica, ya que permite evaluar tanto su evolución temporal como su comparación intersectorial, ofreciendo así una perspectiva crítica sobre los efectos de las políticas gubernamentales en la estructura social. 
+
+Mientras la tasa de pobreza muestra fluctuaciones cíclicas, con una aparente recuperación hacia fines de 2024 (37,8%) tras el pico del 55%, los pisos de pobreza se redefinen progresivamente hacia niveles más altos. Este patrón, lejos de reflejar una mejora sostenible, consolida una estructura de empobrecimiento donde cada crisis eleva el umbral de exclusión social.  
+
+El reciente descenso de la pobreza no se ha visto acompañado por un crecimiento en el bienestar y en la capacidad de compra. Si bien se evidenciaron leves mejoras en los ingresos laborales durante el año 2024, estas fueron desiguales e insuficientes. La destrucción de empleo formal (particularmente en el sector privado registrado) no ha sido compensada por la creación de puestos de calidad, sino por la expansión del cuentapropismo precario y la informalidad laboral.  
+
+Los datos expuestos evidencian que, bajo el argumento del “ordenamiento macroeconómico”, se ha configurado un escenario en el cual el congelamiento real de los salarios ha operado como un mecanismo de empobrecimiento masivo, reduciendo los ingresos laborales en términos reales entre un 24% y un 30 %, según el sector. Más allá de las advertencias que es necesario tomar en cuenta, para contextualizar la caída de la pobreza: aumento de la no respuesta, mayor declaración de ingresos en la EPH, distancia de datos más pronunciada con los datos del IDECBA en la comparación para la Ciudad de Buenos Aires.  
+
+Hemos analizado la brecha entre los ingresos familiares y el umbral de pobreza. Los hogares con ingresos que duplican la canasta básica (el grupo más favorecido) disminuyeron con el tiempo, representando solo el 27% a fines de 2024. En cambio, aquellos por debajo de la canasta básica aumentaron abruptamente a inicios de 2024, reflejando una crisis temporal, pero luego retrocedieron a niveles anteriores, indicando una recuperación parcial sin resolver las vulnerabilidades estructurales.  
+
+Al analizar la distribución de la pobreza por grupos sociales en la población ocupada (2023-2024), se observa que su evolución fluctúa simétricamente en cada trimestre. Las clases trabajadoras más vulnerables fueron las más afectadas (siempre por encima del promedio), mientras que los sectores con mayor formalización y calificación —como pequeños empresarios, trabajadores manuales y no manuales de grandes empresas— mostraron una recuperación más marcada.  
+
+Nuestro informe muestra además que bajo el gobierno de Javier Milei, la pobreza entre jubilados alcanzó su nivel más alto en años, con un incremento del 50,3% interanual, lo que significa que 1 de cada 5 jubilados es pobre y que 290 mil personas mayores cayeron en la pobreza en el último año.  
+
+El análisis de su evolución desde 2016 hasta 2024 expone un deterioro acumulado y acelerado del poder de compra: si en 2016 un hogar promedio podía acceder a 2,01 CBT, hacia 2024 esta cifra se redujo a 1,52 CBT, marcando una pérdida del 24% en la capacidad adquisitiva. Esta contracción, particularmente intensa en el último año, refleja no solo el impacto de la inflación y las crisis recurrentes, sino también el fracaso de las políticas de ingresos para proteger el poder adquisitivo de la población. El dato es alarmante: implica que, en términos reales, los hogares hoy pueden comprar casi un cuarto menos de bienes y servicios esenciales que hace ocho años, profundizando las desigualdades y la vulnerabilidad social.  
+
+Al desagregar los datos de ingresos laborales por rama de actividad entre el tercer trimestre de 2023 y el cuarto trimestre de 2024, surge una historia de dos Argentinas económicas. Mientras el promedio nacional anuncia un esperanzador crecimiento del 6%, la realidad se fragmenta en trayectorias radicalmente distintas según el sector en el que se trabaje.  
+
+Los motores más visibles de esta recuperación: transporte y almacenamiento, industria manufacturera y comercio muestran pulsos de vida, aunque modestos. Pero son la agricultura, ganadería y los servicios profesionales e inmobiliarios los que realmente marcan el ritmo, beneficiados por los vientos favorables de los precios internacionales y la demanda de sectores acomodados.
+Sin embargo, al otro lado del espejo, tres sectores claves para la estructura social argentina aparecen como los grandes perdedores de este reparto desigual. La administración pública - víctima de sucesivos ajustes -, el empleo doméstico - eternamente postergado en la informalidad - y especialmente la enseñanza, conforman el triste podio de los abandonados. Que justamente la educación figure entre los sectores con peor desempeño no es un dato menor: habla de una sociedad que, en medio de la crisis, parece estar descuidando una de sus bases fundamentales.  
+
+Tras el 6% de incremento promedio en los ingresos laborales, se revela una situación socioeconómica preocupante: los trabajadores argentinos están sosteniendo su subsistencia mediante el deterioro de su calidad de vida, sacrificando tiempo personal, bienestar físico y reservas económicas. Un análisis territorial evidencia patrones recurrentes: docentes que complementan sus ingresos con clases particulares, personal sanitario que extiende sus jornadas con turnos adicionales, y empleados comerciales que recurren a plataformas digitales para generar ingresos extras. Lo que antes constituía una estrategia excepcional, hoy se ha normalizado como mecanismo de supervivencia.  
+
+Paralelamente, se observa un progresivo agotamiento de los recursos familiares. Los ahorros, que tradicionalmente funcionaban como amortiguadores ante crisis coyunturales, se han convertido en fondos de subsistencia inmediata. Instrumentos financieros básicos como plazos fijos han perdido valor real frente a la presión inflacionaria, principalmente en los alimentos.
+Este escenario ha impulsado un mercado secundario activo, donde bienes patrimoniales (vehículos, equipos electrónicos, mobiliario) se liquidan para cubrir necesidades básicas, evidenciando una dinámica económica motivada por la urgencia más que por la oportunidad.  
+
+Lejos de representar una genuina recuperación, este panorama refleja un frágil equilibrio sostenido mediante la sobreexplotación laboral y el desgaste del capital familiar. Los indicadores macroeconómicos, aunque positivos en términos agregados, ocultan una realidad microeconómica donde los hogares incrementan su esfuerzo productivo sin lograr mejorar su posición relativa.  
+
+La sostenibilidad de este modelo resulta cuestionable. Mientras las estadísticas oficiales en forma general y sintética,  registran mejoras porcentuales, el análisis más profundo no señala con claridad un mejor bienestar, a tal punto que casi el% de lapoblación es ´pobre por ingresos actuañlmente, y los indicadores sociales cualitativos -desde el aumento de trastornos por estrés laboral hasta la reducción del consumo básico- pintan un cuadro menos alentador. Esta divergencia entre datos formales y experiencias cotidianas plantea interrogantes sobre la verdadera naturaleza del actual proceso económico.
+

@@ -14,8 +14,11 @@ website:
         href: https://www.youtube.com/@desigualdadymovilidadsocia3815
       - icon: github
         href: https://github.com/
+
 format:
   html:
     theme: yeti
     css: styles.css
+    bibliography: Mi biblioteca.bib
+    csl: apa-no-ampersand.csl
 
