@@ -4,7 +4,8 @@
     "index.tex": "65014ec8"
   },
   "about.qmd": {
-    "about.html": "a22de5ac"
+    "about.html": "a22de5ac",
+    "about.tex": "63359bc8"
   },
   "posts/post-with-code/index.qmd": {
     "index.html": "eee0a255"
@@ -19,15 +20,22 @@
     "index.html": "b95485ec"
   },
   "posts/informe2/index.qmd": {
-    "index.html": "985ed35b"
+    "index.html": "985ed35b",
+    "index.tex": "77231730"
   },
   "posts/informe1/index.qmd": {
-    "index.html": "97626e27"
+    "index.html": "97626e27",
+    "index.tex": "dff5d45d"
   },
   "posts/informe2/index.rmarkdown": {
     "index.html": "378a6b6e"
   },
   "posts/informe3/index.qmd": {
-    "index.html": "876389dc"
+    "index.html": "876389dc",
+    "index.tex": "faaef327"
+  },
+  "posts/informe4/index.qmd": {
+    "index.html": "51b5b729",
+    "index.tex": "1545ece6"
   }
 }

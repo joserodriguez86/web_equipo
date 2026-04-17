@@ -14,8 +14,9 @@ lang: es
 fig-caption: true
 fig-cap-location: top
 toc: true
-bibliography: Mi biblioteca.bib
-csl: apa-no-ampersand.csl
+format: 
+  html: default
+  pdf: default
 ---
 
 ## Introducción
@@ -45,11 +46,10 @@ Por su parte, estudios recientes han señalado el cambio de configuración que h
 rm(list = ls())
 pacman::p_load(tidyverse, eph, ggsci, flextable, ggrepel, GDAtools, plotly, patchwork, here)
 
-eph <- get_microdata(2016:2024, type = "individual", period = c(1:4))
+eph <- readRDS(here("fuentes", "eph_individual.RDS"))
 
 canastas <- readxl::read_xlsx(here("fuentes", "canastas_serie.xlsx"))
 
-ipc <- readxl::read_xlsx(here("fuentes", "ipc_trimestral_2024.xlsx"))
 
 theme_set(theme_bw())
 
@@ -67,14 +67,10 @@ eph <- eph %>%
 
 eph$ano_trim <- paste(as.character(eph$ANO4), as.character(eph$trim), sep = "-")
 eph$ano_sem <- paste(as.character(eph$ANO4), as.character(eph$semestre), sep = "-")
-ipc$ano_trim <- paste(as.character(ipc$Año), as.character(ipc$Trimestre), sep = "-")
 
-
-ipc <- ipc %>% 
-  select(ano_trim, ipc2024)
 
 eph <- eph %>% 
-  left_join(ipc, by = "ano_trim")
+  filter(!ano_trim %in% c("2024-III", "2024-IV"))
 
 
 eph <- calculate_poverty(base = eph, basket = canastas, print_summary = FALSE,
@@ -165,8 +161,7 @@ eph <- eph %>%
   group_by(ano_trim, CODUSU, NRO_HOGAR) %>%
   mutate(miembros = n()) %>% 
   ungroup() %>% 
-  mutate(ipcf2 = ITF / miembros,
-         ipcf2024 = (ipcf2 / ipc2024)*100)
+  mutate(ipcf2 = ITF / miembros)
                               
 
 #nivel educativo

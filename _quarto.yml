@@ -13,12 +13,27 @@ website:
       - icon: youtube
         href: https://www.youtube.com/@desigualdadymovilidadsocia3815
       - icon: github
-        href: https://github.com/
+        href: https://github.com/joserodriguez86/web_equipo
+        
 
 format:
   html:
+    toc: true
+    toc-location: right
     theme: yeti
     css: styles.css
     bibliography: Mi biblioteca.bib
     csl: apa-no-ampersand.csl
+  pdf:
+    toc: true
+    pdf-engine: xelatex
+    bibliography: Mi biblioteca.bib
+    csl: apa-no-ampersand.csl
+    fig-format: png  
+    fig-dpi: 300     
+    fig-width: 8
+    fig-height: 5
+    reference-section-title: "Referencias"
+    metadata:
+      bibliography-heading-level: 1
 
