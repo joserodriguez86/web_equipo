@@ -41,4 +41,4 @@ rm(eph_hogar2016, eph_hogar2017, eph_hogar2018, eph_hogar2019, eph_hogar2020, ep
 saveRDS(eph, file = "fuentes/eph_individual.RDS")
 saveRDS(eph_hogar, file = "fuentes/eph_hogar.RDS")
 
-haven::write_sav(eph, "C:/Users/josed/Downloads/eph_individual.sav")
+# haven::write_sav(eph, "C:/Users/josed/Downloads/eph_individual.sav")

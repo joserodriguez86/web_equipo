@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.6.39">
+<meta name="generator" content="quarto-1.9.36">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,6 +12,9 @@
 
 <title>Prueba informe 5 – Grupo de estudios sobre movilidad y desigualdad social</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -33,15 +36,16 @@ ul.task-list li input[type="checkbox"] {
 <script src="../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../">
-<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../site_libs/quarto-html/popper.min.js"></script>
 <script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-e26003cea8cd680ca0c55a263523d882.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-fd053a38988e21bb3d3b0b617a2084cf.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-b5cdc83d754cd650109f5c2e0467249f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -56,7 +60,7 @@ ul.task-list li input[type="checkbox"] {
   ],
   "show-item-context": false,
   "language": {
-    "search-no-results-text": "Sin resultados",
+    "search-no-results-text": "No se han encontrado resultados",
     "search-matching-documents-text": "documentos encontrados",
     "search-copy-link-title": "Copiar el enlace en la búsqueda",
     "search-hide-matches-text": "Ocultar resultados adicionales",
@@ -74,7 +78,7 @@ ul.task-list li input[type="checkbox"] {
 <link rel="stylesheet" href="../../styles.css">
 </head>
 
-<body class="nav-fixed">
+<body class="nav-fixed quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top quarto-banner">
@@ -82,7 +86,8 @@ ul.task-list li input[type="checkbox"] {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a href="../../index.html" class="navbar-brand navbar-brand-logo">
-    <img src="../../imagenes/logoblanco2020 sociales.png" alt="" class="navbar-logo">
+    <img src="../../imagenes/logoblanco2020 sociales.png" alt="" class="navbar-logo light-content">
+    <img src="../../imagenes/logoblanco2020 sociales.png" alt="" class="navbar-logo dark-content">
     </a>
     <a class="navbar-brand" href="../../index.html">
     <span class="navbar-title">Grupo de estudios sobre movilidad y desigualdad social</span>
@@ -172,7 +177,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#perfil-de-trabajadores-por-cuenta-propia" id="toc-perfil-de-trabajadores-por-cuenta-propia" class="nav-link" data-scroll-target="#perfil-de-trabajadores-por-cuenta-propia">Perfil de trabajadores por cuenta propia</a></li>
   <li><a href="#saldo-por-región" id="toc-saldo-por-región" class="nav-link" data-scroll-target="#saldo-por-región">Saldo por región</a></li>
   <li><a href="#pluriempleo-y-ocupación-demandante" id="toc-pluriempleo-y-ocupación-demandante" class="nav-link" data-scroll-target="#pluriempleo-y-ocupación-demandante">Pluriempleo y ocupación demandante</a></li>
-  <li><a href="#cae-el-empleo-industrial-y-crecen-ramas-precarias" id="toc-cae-el-empleo-industrial-y-crecen-ramas-precarias" class="nav-link" data-scroll-target="#cae-el-empleo-industrial-y-crecen-ramas-precarias">Cae el empleo Industrial y crecen ramas precarias</a></li>
+  <li><a href="#distribución-de-trabajadores-por-rama-de-actividad" id="toc-distribución-de-trabajadores-por-rama-de-actividad" class="nav-link" data-scroll-target="#distribución-de-trabajadores-por-rama-de-actividad">Distribución de trabajadores por rama de actividad</a></li>
   <li><a href="#población-con-problemas-de-empleo" id="toc-población-con-problemas-de-empleo" class="nav-link" data-scroll-target="#población-con-problemas-de-empleo">Población con problemas de empleo</a></li>
   <li><a href="#jubilados-que-trabajan" id="toc-jubilados-que-trabajan" class="nav-link" data-scroll-target="#jubilados-que-trabajan">Jubilados que trabajan</a></li>
   </ul></li>
@@ -210,6 +215,9 @@ ul.task-list li input[type="checkbox"] {
 <h1>Empeoramiento de las inserciones laborales</h1>
 <section id="pérdida-de-puestos-formales-y-aumento-de-la-precarización" class="level2">
 <h2 class="anchored" data-anchor-id="pérdida-de-puestos-formales-y-aumento-de-la-precarización">Pérdida de puestos formales y aumento de la precarización</h2>
+<p>Como hemos señalado en el <a href="https://gedyms.netlify.app/posts/informe4/" target="_blank">informe anterior</a> uno de los rasgos más sobresalientes de las reconfiguraciones que está sufriendo el mercado de trabajo en los últimos años es el crecimiento de puestos de trabajo ligados a la informalidad, fundamentalmente en la modalidad de cuentapropismo. Mientras que el trabajo asalariado formal, entre el 4to trimestre de 2023 y el 4to trimestre de 2025, tuvo una merma de 253.543 puestos laborales, el cuentapropismo de baja calificación aumentó en 288.765 trabajadores. Resumiendo, 9 de cada 10 trabajos que se crean implican puestos independientes baja calificación.</p>
+<p>Los trabajadores expulsados del sector formal se reinsertan en condiciones de alta vulnerabilidad, con una pérdida sustancial de derechos laborales e ingresos significativamente menores, comprometiendo, a su vez, la sostenibilidad futura del sistema previsional.</p>
+<p>El saldo entre trimestres es casi nulo (pérdida de 18.764 puestos) pero con una transferencia importante de trabajadores desde el sector asalariado al cuenta propia, en primer lugar, y desde inserciones formales a informales, en segundo lugar.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-saldo" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -266,6 +274,7 @@ Figura&nbsp;1: Diferencia de ocupados en las distintas inserciones laborales. 20
 <li>El 83% percibe un ingreso laboral de 1 millón de pesos o menos</li>
 </ul>
 <p>Cabe aclarar que no se trata solo los Rappi porque el 73% son informales y los Uber/pedidos ya tienen monotributo obligatorio.</p>
+<p>El análisis diacrónico de la estructura ocupacional argentina (<a href="#fig-inserciones" class="quarto-xref">Figura&nbsp;2</a>) revela un proceso de “desformalización” progresiva y sostenida. La participación de los asalariados formales (la categoría que concentra los puestos de trabajo más protegidos y mejor remunerados) ha experimentado una contracción significativa, descendiendo del 50% en el segundo trimestre de 2016 a un mínimo histórico del 46% en el mismo período de 2025. Esta caída de 4 puntos porcentuales en nueve años consolida un cambio estructural en el mercado laboral, caracterizado por el avance relativo de modalidades más vulnerables, como el trabajo asalariado informal, pero fundamentalmente del cuentapropismo de baja calificación (que escaló del 16% al 20% en el mismo lapso).</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-inserciones" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -280,6 +289,7 @@ Figura&nbsp;2: Evolución de inserciones laborales. 3ros trimestres. 2016-2025.
 </div>
 </div>
 </div>
+<p>La evolución trimestral de la proporción de trabajadores precarios (<a href="#fig-trabajadores_precarios" class="quarto-xref">Figura&nbsp;3</a>) consolida una trayectoria ascendente que culmina en el segundo trimestre de 2025 con un máximo histórico del 48,6% y con un leve descenso hacia finales del mismo año. Para el caso de los jóvenes, a lo largo de la serie, la situación es más compleja, presentándose aun valores por encima de los hallados en 2023 y con una tendencia errática desde 2019. En promedio, durante los últimos años, el 58% de los trabajadores de 18 a 30 años se encontraban en una situación de informalidad laboral.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-trabajadores_precarios" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -297,6 +307,7 @@ Figura&nbsp;3: Evolución de trabajadores precarios. Trimestres.
 </section>
 <section id="saldo-por-región" class="level2">
 <h2 class="anchored" data-anchor-id="saldo-por-región">Saldo por región</h2>
+<p>Si se observa la dinámica del empleo formal por región (<a href="#fig-asalariados" class="quarto-xref">Figura&nbsp;4</a>) se constata que, a excepción del norte del país y de las provincias pampeanas, el resto de los aglomerados que conforman la muestra de la EPH han sufrido una fuerte caída en este tipo de inserciones. En el caso de Cuyo y Patagonia la reducción en el trabajo asalariado formal fue de 6 y 4 puntos porcentuales, respectivamente. Con mayor peso absoluto (-159.000 trabajadores), debido a su densidad poblacional, sigue el Gran Buenos Aires en donde el empleo asalariado formal se redujo de un 49% hacia fines de 2023 al 47% a fines de 2025.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-asalariados" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -314,6 +325,7 @@ Figura&nbsp;4: Porcentaje de asalariados formales sobre población ocupada por r
 </section>
 <section id="pluriempleo-y-ocupación-demandante" class="level2">
 <h2 class="anchored" data-anchor-id="pluriempleo-y-ocupación-demandante">Pluriempleo y ocupación demandante</h2>
+<p>El aumento del pluriempleo y la demanda de horas de trabajo por parte de la población ocupada son dos fenómenos que se han intensificado en los últimos años, reflejando la dificultad para la percepción de ingresos en el actual mercado de trabajo. El pluriempleo (<a href="#fig-pluriempleo" class="quarto-xref">Figura&nbsp;5</a>) ha mostrado una tendencia ascendente desde 2021, alcanzando un máximo histórico del 12% en 2025. Por su parte, la cantidad de trabajadores ocupados que demandan más horas de trabajo (<a href="#fig-mashoras" class="quarto-xref">Figura&nbsp;6</a>) a alcanzado una proporción cercana al 20%, mostrando una nueva tendencia ascedente desde fines de 2023.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-pluriempleo" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -330,21 +342,23 @@ Figura&nbsp;5: Evolución del pluriempleo. 4tos trimestres. 2016-2025.
 </div>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-subocupacion" class="quarto-float quarto-figure quarto-figure-center anchored">
+<div id="fig-mashoras" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
-<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-subocupacion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-mashoras-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figura&nbsp;6: Evolución de la población ocupada demandante de horas de trabajo. Trimestres
 </figcaption>
-<div aria-describedby="fig-subocupacion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-subocupacion-1.png" class="img-fluid figure-img" width="672">
+<div aria-describedby="fig-mashoras-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-mashoras-1.png" class="img-fluid figure-img" width="672">
 </div>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="cae-el-empleo-industrial-y-crecen-ramas-precarias" class="level2">
-<h2 class="anchored" data-anchor-id="cae-el-empleo-industrial-y-crecen-ramas-precarias">Cae el empleo Industrial y crecen ramas precarias</h2>
+<section id="distribución-de-trabajadores-por-rama-de-actividad" class="level2">
+<h2 class="anchored" data-anchor-id="distribución-de-trabajadores-por-rama-de-actividad">Distribución de trabajadores por rama de actividad</h2>
+<p>Centrándose en el empleo asalariado, se observa que el saldo entre el cuarto trimestre de 2023 y el cuarto trimestre de 2025 nuevamente permite ilustrar los cambios que están ocurriendo a nivel estructura en el mercado de trabajo (<a href="#fig-rama" class="quarto-xref">Figura&nbsp;7</a>). Las ramas que mayores pérdidas han experimentado son la <em>industria manufacturera</em> (-160.380) y la <em>enseñanza</em> (-133.386). Mientras que el primer caso puede entender como una consecuencia a la apertura de importaciones y a la disminución del mercado interno, en el caso de la enseñanza puede existir una combinatoria entre el efecto de la estacionalidad de los meses de comparación con cambios laborales debido a la caída salarial en el sector de la docencia. En menor medida, aunque no por ello menos importante, los trabajos ligados a la administración pública y a la construcción también han mostrado una reducción entre años.</p>
+<p>Por el contrario, las ramas que más se han ampliado, en términos absolutos son las de <em>transporte y almacenamiento</em> (+79.657) y <em>servicio doméstico</em> (+62.452).</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-rama" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -393,6 +407,7 @@ Figura&nbsp;9: Composición de la población con problemas de empleo. 2025-IV.
 </section>
 <section id="jubilados-que-trabajan" class="level2">
 <h2 class="anchored" data-anchor-id="jubilados-que-trabajan">Jubilados que trabajan</h2>
+<p>Otro rasgo que se profundiza en estos tiempos es el aumento de la población en edad jubilatoria (mayores de 65 años) que se encuentran trabajando (<a href="#fig-jubilados" class="quarto-xref">Figura&nbsp;10</a>). Si bien durante el período de la pandemia del COVID-19 hubo una caída en la población ocupada en este rango etario, la tendencia ha ido en ascenso. Para el cuarto trimestre de 2025 se ha alcanzado el pico máximo en los últimos 9 años, encontrándose un 18% de los mayores de 65 años ocupados en el mercado de trabajo.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-jubilados" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -430,6 +445,7 @@ Figura&nbsp;11: Porcentaje de ocupados que tienen ingresos superiores o inferior
 </section>
 <section id="ingresos-laborales-por-tipo-de-ocupación-y-rama" class="level2">
 <h2 class="anchored" data-anchor-id="ingresos-laborales-por-tipo-de-ocupación-y-rama">Ingresos laborales por tipo de ocupación y rama</h2>
+<p>Cuando se observan los ingresos laborales en términos relativos, se constata que los trabajadores informales y los cuentapropistas de baja calificación ganan, en promedio, un 45% menos que los asalariados formales. Es relevante identificar esta distancia ya que es en estos segmentos en donde las estadísticas identifican una mayor recuperación.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-brecha" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -444,12 +460,14 @@ Figura&nbsp;12: Brecha de ingresos entre las distintas inserciones laborales y l
 </div>
 </div>
 </div>
+<p>Si consideramos a las 10 ocupaciones más representativas dentro del sector informal, se constata que la variación porcentual del ingreso laboral horario entre el cuarto trimestre de 2024 y el cuarto trimestre de 2025 ha sido positiva en todas ellas (<a href="#fig-ingresos-informales" class="quarto-xref">Figura&nbsp;13</a>). Destacan especialmente las ocupaciones de la construcción, la producción artesanal y el servicio doméstico, donde se observan variaciones superiores al 40%. Dentro de estas ocupaciones seleccionados, las ocupaciones de transporte muestran una pérdida del 10% en los ingresos laborales.</p>
+<p>Sin embargo, si realizamos un <em>ranking</em> de las ocupaciones informales según la mediana de ingresos laborales (<a href="#fig-ingresos-informales-2" class="quarto-xref">Figura&nbsp;14</a>), por fuera de las ocupaciones de dirección de pequeños establecimientos, en promedio, los ingresos laborales para el 4to trimestre de 2025 eran de $500.000. Las ocupaciones vinculadas al transporte, la construcción y la reparación de bienes son las que mayores ingresos logran captar.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-ingresos-informales" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-ingresos-informales-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figura&nbsp;13: Variación porcentual de los ingresos laborales en ocupaciones informales seleccionadas. 2025-IV vs 2024-IV.
+Figura&nbsp;13: Variación porcentual del ingreso laboral horario en ocupaciones informales seleccionadas. 2025-IV vs 2024-IV.
 </figcaption>
 <div aria-describedby="fig-ingresos-informales-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="index_files/figure-html/fig-ingresos-informales-1.png" class="img-fluid figure-img" width="672">
@@ -472,6 +490,8 @@ Figura&nbsp;14: Mediana de ingresos laborales en ocupaciones informales seleccio
 </div>
 </div>
 </div>
+<p>Si observamos al conjunto de los ocupados según la rama de actividad en la que se insertan encontramos que la explotación de minas y canteras<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> es el único sector que duplica y más a los ingresos promedio del resto de las actividades<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> (<a href="#fig-ingresos-rama" class="quarto-xref">Figura&nbsp;15</a>). Luego, únicamente los sectores de información / comunicación y financieros tienen trabajadores que superan en sus ingresos mensuales $1.500.000.</p>
+<p>Para el resto de las actividades, en naranja hemos identificado a las que tienen una mayor participación en la población ocupada total, siendo únicamente la rama de transporte, salud, administración pública e industriales las que tienen ingresos mensuales cercanos al millón de pesos.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-ingresos-rama" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -489,6 +509,9 @@ Figura&nbsp;15: Mediana de ingresos laborales según rama de actividad (en naran
 </section>
 <section id="estrategias-económicas-familiares" class="level2">
 <h2 class="anchored" data-anchor-id="estrategias-económicas-familiares">Estrategias económicas familiares</h2>
+<p>El estudio de las estrategias de los hogares permite una comprensión del modo en que las familias hacen uso de determinadas prácticas y recursos para reproducir o modificar sus condiciones de vida. Como hemos analizado en el informe anterior, el principal recurso al que los hogares recurrieron luego de la devaluación de finales de 2023 fue la utilización de ahorros familiares (<a href="#fig-ahorros" class="quarto-xref">Figura&nbsp;16</a>). Luego, el uso de este activo fue descendiendo a niveles similares a los de años anteriores.</p>
+<p>La necesidad de recurrir a préstamos de amigos o familiares también se mantiene constante en los últimos trimestres, cercano al 16% de los hogares. Sin embargo, se aprecia un aumento en la necesidad de recurrir a préstamos bancarios o financieros, alcanzando a fines del 2025 al 15% de los hogares.</p>
+<p>Si analizamos estas estrategias según clase social (<a href="#fig-estrategias-clase" class="quarto-xref">Figura&nbsp;17</a>) encontraremos algunos matices en como éstas son implementadas. La utilización de ahorros tiene una cobertura más transversal entre los grupos, siendo los trabajadores manuales los que en mayor medida acudieron a este tipo de práctica durante (cerca del 40%). Algo similar se observa en el caso de la utilización préstamos bancarios o financieros: los trabajadores de grandes establecimientos son aquellos con mayor acceso a este tipo de estrategias (cerca del 20%). Finalmente, acudir a préstamos de familiares o amigos es una práctica que también se observa en los trabajadores de pequeños establecimientos, pero también entre la población inactiva.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-ahorros" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -505,10 +528,14 @@ Figura&nbsp;16: Estrategias económicas familiares. Trimestres. 2016-2025.
 </div>
 <div class="cell">
 <div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<figcaption>Estrategias económicas familiares según clase social. 2025-IV.</figcaption>
-<p><img src="index_files/figure-html/estrategias por clase-1.png" class="img-fluid figure-img" width="672"></p>
+<div id="fig-estrategias-clase" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-estrategias-clase-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;17: Estrategias económicas familiares según clase social. 2025-IV.
+</figcaption>
+<div aria-describedby="fig-estrategias-clase-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-estrategias-clase-1.png" class="img-fluid figure-img" width="672">
+</div>
 </figure>
 </div>
 </div>
@@ -519,12 +546,14 @@ Figura&nbsp;16: Estrategias económicas familiares. Trimestres. 2016-2025.
 <h1>Pobreza</h1>
 <section id="tendencias-generales" class="level2">
 <h2 class="anchored" data-anchor-id="tendencias-generales">Tendencias generales</h2>
+<p>En la <a href="#fig-pobreza" class="quarto-xref">Figura&nbsp;18</a> se observa la evolución de la población bajo la línea de pobreza e indigencia en el período 2016-2025 por trimestres. Como se ha señalado en informes anteriores, luego del incremento inicial de la pobreza entre el último trimestre de 2023 y el primero de 2024 se observó un descenso de la pobreza, cuya dinámica es aun hoy fruto de discusiones en torno a las causantes de dicha disminución. Algunas intervenciones han hecho foco en la disminución de la inflación como fenómeno principal, mientras que otros se han enfocado en los cambios metodológicos que ha tenido el cuestionario de la EPH, que entre otros aspectos, permite una mejora en la captación de los ingresos no laborales.</p>
+<p>Más allá de las discusiones, lo que se observa tomando la medición trimestral es un incremento de la pobreza en el último trimestre, en el orden de los 3 puntos porcentuales, lo que señalaría el primer aumento intertrimestral considerable desde principios de 2024<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-pobreza" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-pobreza-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figura&nbsp;17: Evolucion de la población bajo la línea de pobreza e indigencia. Argentina urbana, 2016-2025 (trimestres)
+Figura&nbsp;18: Evolucion de la población bajo la línea de pobreza e indigencia. Argentina urbana, 2016-2025 (trimestres)
 </figcaption>
 <div aria-describedby="fig-pobreza-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="index_files/figure-html/fig-pobreza-1.png" class="img-fluid figure-img" width="672">
@@ -536,12 +565,13 @@ Figura&nbsp;17: Evolucion de la población bajo la línea de pobreza e indigenci
 </section>
 <section id="la-pobreza-por-clase-social" class="level2">
 <h2 class="anchored" data-anchor-id="la-pobreza-por-clase-social">La pobreza por clase social</h2>
+<p>Al examinar la pobreza por clases socio-ocupacionales dentro de la población ocupada (<a href="#fig-clase" class="quarto-xref">Figura&nbsp;19</a>), se observa que si bien el promedio de la población ocupada en situación de pobreza aumentó entre el tercer y cuarto trimestre de 2025, algunas clases estuvieron más expuestas que otras. Los propietarios y directivos y los trabajadores por cuenta propia profesionales / calificados disminuyeron su participación en la pobreza. El resto de las clases, por el contrario, aumentaron empeoraron sus condiciones de vida, fundamentalmente los trabajadores manuales de pequeños establecimientos.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-clase" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-clase-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figura&nbsp;18: Evolución de la pobreza según clase social. Argentina urbana, 2024-2025 (trimestres)
+Figura&nbsp;19: Evolución de la pobreza según clase social. Argentina urbana, 2024-2025 (trimestres)
 </figcaption>
 <div aria-describedby="fig-clase-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="index_files/figure-html/fig-clase-1.png" class="img-fluid figure-img" width="672">
@@ -558,7 +588,7 @@ Figura&nbsp;18: Evolución de la pobreza según clase social. Argentina urbana, 
 <div id="fig-cbt" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-cbt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figura&nbsp;19: Porcentaje de ocupados con ingresos laborales por debajo de la Canasta Básica Total (hogar tipo II). 2025-IV.
+Figura&nbsp;20: Porcentaje de ocupados con ingresos laborales por debajo de la Canasta Básica Total (hogar tipo II). 2025-IV.
 </figcaption>
 <div aria-describedby="fig-cbt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="index_files/figure-html/fig-cbt-1.png" class="img-fluid figure-img" width="672">
@@ -588,7 +618,7 @@ Figura&nbsp;19: Porcentaje de ocupados con ingresos laborales por debajo de la C
 <div id="fig-saldo-neuquen" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-saldo-neuquen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figura&nbsp;20: Evolución de la composición ocupacional. Neuquén total urbano, 2023-2025.
+Figura&nbsp;21: Evolución de la composición ocupacional. Neuquén total urbano, 2023-2025.
 </figcaption>
 <div aria-describedby="fig-saldo-neuquen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="index_files/figure-html/fig-saldo-neuquen-1.png" class="img-fluid figure-img" width="672">
@@ -614,7 +644,7 @@ Figura&nbsp;20: Evolución de la composición ocupacional. Neuquén total urbano
 <div id="fig-sipa" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-sipa-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figura&nbsp;21: Variación interanual del empleo asalariado registrado por rama de actividad. Diciembre 2025 vs Diciembre 2024.
+Figura&nbsp;22: Variación interanual del empleo asalariado registrado por rama de actividad. Diciembre 2025 vs Diciembre 2024.
 </figcaption>
 <div aria-describedby="fig-sipa-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="index_files/figure-html/fig-sipa-1.png" class="img-fluid figure-img" width="672">
@@ -628,238 +658,253 @@ Figura&nbsp;21: Variación interanual del empleo asalariado registrado por rama 
 </section>
 </section>
 
-</main> <!-- /main -->
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Notas</h2>
+
+<ol>
+<li id="fn1"><p>Cabe destacar que la rama minas y canteras, pese a ser una rama dinámica y con altos niveles de productividad genera una demanda de mano de obra muy baja. Del total de ocupados que hay en el país, esta rama emplea solamente al 0,3%<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Aun retirando de los cálculos aquellos casos que pueden considerarse como <em>outliers</em><a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Algunas proyecciones como el <a href="https://www.utdt.edu/ver_contenido.php?id_contenido=22217&amp;id_item_menu=36605">nowcast</a> de pobreza realizado por Martín González Rozada también observan hacia fines de 2025 el comienzo de una tendencia de freno al descenso de la pobreza<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
-    }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
       }
+      return false;
     }
-    return false;
-  }
-  const onCopySuccess = function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copiado");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copiado");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
       }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  }
-  const getTextToCopy = function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
       for (const childEl of codeEl.children) {
         if (isCodeAnnotation(childEl)) {
           childEl.remove();
         }
       }
       return codeEl.innerText;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
-    text: getTextToCopy
-  });
-  clipboard.on('success', onCopySuccess);
-  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
-      text: getTextToCopy,
-      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
     });
-    clipboardModal.on('success', onCopySuccess);
-  }
-    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
-    var mailtoRegex = new RegExp(/^mailto:/);
-      var filterRegex = new RegExp("https:\/\/gedyms\.netlify\.app");
-    var isInternal = (href) => {
-        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
     }
-    // Inspect non-navigation links and adorn them if external
- 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
-    for (var i=0; i<links.length; i++) {
-      const link = links[i];
-      if (!isInternal(link.href)) {
-        // undo the damage that might have been done by quarto-nav.js in the case of
-        // links that we want to consider external
-        if (link.dataset.originalHref !== undefined) {
-          link.href = link.dataset.originalHref;
-        }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/gedyms\.netlify\.app");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
-    }
-  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-    const config = {
-      allowHTML: true,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start',
-    };
-    if (contentFn) {
-      config.content = contentFn;
-    }
-    if (onTriggerFn) {
-      config.onTrigger = onTriggerFn;
-    }
-    if (onUntriggerFn) {
-      config.onUntrigger = onUntriggerFn;
-    }
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      if (note) {
-        return note.innerHTML;
-      } else {
-        return "";
-      }
-    });
-  }
-  const xrefs = window.document.querySelectorAll('a.quarto-xref');
-  const processXRef = (id, note) => {
-    // Strip column container classes
-    const stripColumnClz = (el) => {
-      el.classList.remove("page-full", "page-columns");
-      if (el.children) {
-        for (const child of el.children) {
-          stripColumnClz(child);
-        }
-      }
-    }
-    stripColumnClz(note)
-    if (id === null || id.startsWith('sec-')) {
-      // Special case sections, only their first couple elements
-      const container = document.createElement("div");
-      if (note.children && note.children.length > 2) {
-        container.appendChild(note.children[0].cloneNode(true));
-        for (let i = 1; i < note.children.length; i++) {
-          const child = note.children[i];
-          if (child.tagName === "P" && child.innerText === "") {
-            continue;
-          } else {
-            container.appendChild(child.cloneNode(true));
-            break;
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
           }
         }
-        if (window.Quarto?.typesetMath) {
-          window.Quarto.typesetMath(container);
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
         }
-        return container.innerHTML
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
       } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
         if (window.Quarto?.typesetMath) {
           window.Quarto.typesetMath(note);
         }
-        return note.innerHTML;
-      }
-    } else {
-      // Remove any anchor links if they are present
-      const anchorLink = note.querySelector('a.anchorjs-link');
-      if (anchorLink) {
-        anchorLink.remove();
-      }
-      if (window.Quarto?.typesetMath) {
-        window.Quarto.typesetMath(note);
-      }
-      if (note.classList.contains("callout")) {
-        return note.outerHTML;
-      } else {
-        return note.innerHTML;
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
       }
     }
-  }
-  for (var i=0; i<xrefs.length; i++) {
-    const xref = xrefs[i];
-    tippyHover(xref, undefined, function(instance) {
-      instance.disable();
-      let url = xref.getAttribute('href');
-      let hash = undefined; 
-      if (url.startsWith('#')) {
-        hash = url;
-      } else {
-        try { hash = new URL(url).hash; } catch {}
-      }
-      if (hash) {
-        const id = hash.replace(/^#\/?/, "");
-        const note = window.document.getElementById(id);
-        if (note !== null) {
-          try {
-            const html = processXRef(id, note.cloneNode(true));
-            instance.setContent(html);
-          } finally {
-            instance.enable();
-            instance.show();
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
           }
         } else {
-          // See if we can fetch this
-          fetch(url.split('#')[0])
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
           .then(res => res.text())
           .then(html => {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.getElementById(id);
+            const note = htmlDoc.querySelector('main.content');
             if (note !== null) {
-              const html = processXRef(id, note);
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
               instance.setContent(html);
             } 
           }).finally(() => {
@@ -867,185 +912,161 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             instance.show();
           });
         }
-      } else {
-        // See if we can fetch a full url (with no hash to target)
-        // This is a special case and we should probably do some content thinning / targeting
-        fetch(url)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const htmlDoc = parser.parseFromString(html, "text/html");
-          const note = htmlDoc.querySelector('main.content');
-          if (note !== null) {
-            // This should only happen for chapter cross references
-            // (since there is no id in the URL)
-            // remove the first header
-            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
-              note.children[0].remove();
-            }
-            const html = processXRef(null, note);
-            instance.setContent(html);
-          } 
-        }).finally(() => {
-          instance.enable();
-          instance.show();
-        });
-      }
-    }, function(instance) {
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            div.style.left = 0;
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-        // Handle positioning of the toggle
-    window.addEventListener(
-      "resize",
-      throttle(() => {
-        elRect = undefined;
-        if (selectedAnnoteEl) {
-          selectCodeLines(selectedAnnoteEl);
-        }
-      }, 10)
-    );
-    function throttle(fn, ms) {
-    let throttle = false;
-    let timer;
-      return (...args) => {
-        if(!throttle) { // first call gets through
-            fn.apply(this, args);
-            throttle = true;
-        } else { // all the others get throttled
-            if(timer) clearTimeout(timer); // cancel #2
-            timer = setTimeout(() => {
-              fn.apply(this, args);
-              timer = throttle = false;
-            }, ms);
-        }
-      };
-    }
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
-    }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
-          }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+      }, function(instance) {
       });
     }
-  }
-});
-</script>
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
 </div> <!-- /content -->
 
 

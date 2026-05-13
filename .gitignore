@@ -6,3 +6,5 @@
 /.quarto/
 fuentes/eph_individual.RDS
 .positai
+
+**/*.quarto_ipynb
