@@ -1,27 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://gedyms.netlify.app/posts/informe4/index.html</loc>
-    <lastmod>2025-12-02T11:10:10.335Z</lastmod>
+    <loc>https://gedyms.netlify.app/posts/informe5/index.html</loc>
+    <lastmod>2026-05-12T14:22:12.091Z</lastmod>
   </url>
   <url>
-    <loc>https://gedyms.netlify.app/posts/informe2/index.html</loc>
-    <lastmod>2025-05-18T14:09:34.434Z</lastmod>
-  </url>
-  <url>
-    <loc>https://gedyms.netlify.app/index.html</loc>
-    <lastmod>2025-05-18T16:51:08.343Z</lastmod>
-  </url>
-  <url>
-    <loc>https://gedyms.netlify.app/about.html</loc>
-    <lastmod>2025-05-05T02:19:57.005Z</lastmod>
+    <loc>https://gedyms.netlify.app/posts/informe3/index.html</loc>
+    <lastmod>2025-05-19T12:28:58.091Z</lastmod>
   </url>
   <url>
     <loc>https://gedyms.netlify.app/posts/informe1/index.html</loc>
     <lastmod>2025-05-18T03:23:33.558Z</lastmod>
   </url>
   <url>
-    <loc>https://gedyms.netlify.app/posts/informe3/index.html</loc>
-    <lastmod>2025-05-19T12:28:58.091Z</lastmod>
+    <loc>https://gedyms.netlify.app/about.html</loc>
+    <lastmod>2025-05-05T02:19:57.005Z</lastmod>
+  </url>
+  <url>
+    <loc>https://gedyms.netlify.app/index.html</loc>
+    <lastmod>2025-05-18T16:51:08.343Z</lastmod>
+  </url>
+  <url>
+    <loc>https://gedyms.netlify.app/posts/informe2/index.html</loc>
+    <lastmod>2025-05-18T14:09:34.434Z</lastmod>
+  </url>
+  <url>
+    <loc>https://gedyms.netlify.app/posts/informe4/index.html</loc>
+    <lastmod>2025-12-02T11:10:10.335Z</lastmod>
   </url>
 </urlset>
