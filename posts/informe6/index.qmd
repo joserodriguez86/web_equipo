@@ -221,12 +221,12 @@ eph <- eph %>%
       TipodeOcupacionBIS,
       levels = c(1, 2, 3, 4, 5, 6),
       labels = c(
-        "asalariado formal",
-        "asalariado informal",
-        "cuentapropista baja calificación",
-        "cuentapropista alta calificación",
-        "patrón precario",
-        "patrón formal"
+        "Asalariado formal",
+        "Asalariado informal",
+        "Cuentapropista baja calificación",
+        "Cuentapropista alta calificación",
+        "Patrón precario",
+        "Patrón formal"
       )
     ))
 
@@ -265,27 +265,27 @@ eph_hogar <- eph_hogar %>%
          ano_sem = paste(as.character(ANO4), as.character(semestre), sep = "-"))
 
 eph <- eph %>%
+  mutate(TipodeOcupacionBIS = str_to_sentence(TipodeOcupacionBIS))  # "asalariado formal" -> "Asalariado formal"
+
+eph <- eph %>%
   mutate(
     ConprobldeEmpleo = case_when(
       # Categoría 1: Con problemas de empleo
-      ESTADO == 1 & TipodeOcupacionBIS %in% c("asalariado informal", "cuentapropista baja calificación", "patrón precario") ~ "Informales",
-      ESTADO == 1 & TipodeOcupacionBIS %in% c("asalariado formal", "cuentapropista alta aclificación", "patrón formal") & INTENSI == "Subocupados" & PP03I == 1 ~ "Formales subocupados demandantes",
-      ESTADO == 1 & TipodeOcupacionBIS %in% c("asalariado formal", "cuentapropista alta calificación", "patrón formal") & INTENSI == "Ocupados plenos" & PP03I == 1 ~ "Formales plenos demandantes",
-      ESTADO == 1 & TipodeOcupacionBIS %in% c("asalariado formal", "cuentapropista alta calificación", "patrón formal") & INTENSI == "Sobreocupados" ~ "Formales sobreocupados",
+      ESTADO == 1 & TipodeOcupacionBIS %in% c("Asalariado informal", "Cuentapropista baja calificación", "Patrón precario") ~ "Informales",
+      ESTADO == 1 & TipodeOcupacionBIS %in% c("Asalariado formal", "Cuentapropista alta calificación", "Patrón formal") & INTENSI == "Subocupados" & PP03I == 1 ~ "Formales subocupados demandantes",
+      ESTADO == 1 & TipodeOcupacionBIS %in% c("Asalariado formal", "Cuentapropista alta calificación", "Patrón formal") & INTENSI == "Ocupados plenos" & PP03I == 1 ~ "Formales plenos demandantes",
+      ESTADO == 1 & TipodeOcupacionBIS %in% c("Asalariado formal", "Cuentapropista alta calificación", "Patrón formal") & INTENSI == "Sobreocupados" ~ "Formales sobreocupados",
       ESTADO == 2 ~ "Desocupados",
-      
-      # Categoría 2: Sin problemas de empleo
-      ESTADO == 1 & TipodeOcupacionBIS %in% c("asalariado formal", "cuentapropista alta calificación", "patrón formal") & INTENSI == "Ocupados plenos" & PP03I != 1 ~ "Sin problemas",
-      ESTADO == 1 & TipodeOcupacionBIS %in% c("asalariado formal", "cuentapropista alta calificación", "patrón formal") & INTENSI == "Subocupados" & PP03I != 1 ~ "Sin problemas",
 
-      # Todo lo demás = No clasificado
-      TRUE ~ "NA_character"
+      # Categoría 2: Sin problemas de empleo
+      ESTADO == 1 & TipodeOcupacionBIS %in% c("Asalariado formal", "Cuentapropista alta calificación", "Patrón formal") & INTENSI == "Ocupados plenos" & PP03I != 1 ~ "Sin problemas",
+      ESTADO == 1 & TipodeOcupacionBIS %in% c("Asalariado formal", "Cuentapropista alta calificación", "Patrón formal") & INTENSI == "Subocupados" & PP03I != 1 ~ "Sin problemas",
+
+      TRUE ~ NA_character_
     ),
     ConprobldeEmpleo = factor(
       ConprobldeEmpleo,
       levels = c("Sin problemas", "Desocupados", "Informales",
-                 "Formales subocupados demandantes", "Formales plenos demandantes", "Formales sobreocupados"),
-      labels = c("Sin problemas", "Desocupados", "Informales",
                  "Formales subocupados demandantes", "Formales plenos demandantes", "Formales sobreocupados")
     )
   )
@@ -499,29 +499,34 @@ eph <- eph %>%
 
 
 ```{r Saldo ocupados}
-#| fig.cap: "Diferencia de ocupados en las distintas inserciones laborales. 2do trimestre 2023-2026."
+#| fig.cap: "Diferencia de ocupados en las distintas inserciones laborales. 2023-III vs 2026-II (trimestres)."
 #| label: fig-saldo
 
 saldo <- eph %>% 
-  filter(ESTADO == 1, ano_trim %in% c("2023-II", "2026-II"), !is.na(TipodeOcupacionBIS)) %>% 
+  filter(ESTADO == 1, ano_trim %in% c("2023-III", "2026-II"), !is.na(TipodeOcupacionBIS)) %>% 
   group_by(ano_trim, TipodeOcupacionBIS) %>%
   tally(PONDERA) %>% 
   pivot_wider(names_from = ano_trim, values_from = n) %>% 
-  mutate(diferencia = `2026-II` - `2023-II`)
+  mutate(diferencia = `2026-II` - `2023-III`)
 
 total <- eph %>% 
-  filter(ESTADO == 1, ano_trim %in% c("2023-II", "2026-II"), !is.na(TipodeOcupacionBIS)) %>% 
+  filter(ESTADO == 1, ano_trim %in% c("2023-III", "2026-II"), !is.na(TipodeOcupacionBIS)) %>% 
   group_by(ano_trim) %>% 
   tally(PONDERA) %>% 
   pivot_wider(names_from = ano_trim, values_from = n) %>% 
-  mutate(diferencia = `2026-II` - `2023-II`) %>% 
+  mutate(diferencia = `2026-II` - `2023-III`) %>% 
   add_column(TipodeOcupacionBIS = "Total ocupados", .before = 1)
 
 saldo <- saldo %>%
   add_row(total)
 
+
 saldo %>% 
-  mutate(color_bar = if_else(diferencia >= 0, "positivo", "negativo")) %>%
+  mutate(color_bar = case_when(
+    TipodeOcupacionBIS == "Total ocupados" ~ "total",
+    diferencia >= 0 ~ "positivo",
+    TRUE ~ "negativo"
+  )) %>%
   ggplot(aes(x = TipodeOcupacionBIS, y = diferencia, fill = color_bar)) +
   geom_col(alpha = .7) +
   geom_text(aes(label = format(diferencia,
@@ -532,13 +537,14 @@ saldo %>%
             size = 2.5) +
   scale_fill_manual(values = c(
     "positivo" = "lightblue",
-    "negativo" = "red"
+    "negativo" = "red",
+    "total"    = "orange"
   )) +
   labs(caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         axis.text.y = element_text(size = 9),
-        axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
+        axis.text.x = element_text(size = 8),
         plot.caption = element_text(size = 9, hjust = 1),
         plot.subtitle = element_text(size = 10),
         panel.grid = element_line(linewidth = .2),
@@ -549,63 +555,33 @@ saldo %>%
 
 ```
 
-```{r saldo por sector}
-#| fig.cap: "Evolución de ocupados por sector de actividad. 2do trimestre 2023-2026."
-#| label: fig-saldo-sector
-
-eph %>%
-  filter(ESTADO == 1, TRIMESTRE == 2, ANO4 >= 2023, !is.na(sector)) %>%
-  group_by(ANO4, sector) %>%
-  tally(PONDERA) %>%
-  ggplot(aes(x = as.factor(ANO4), y = n, fill = sector)) +
-  geom_col(position = "dodge", alpha = .7) +
-  geom_text(aes(label = format(n, big.mark = ".", decimal.mark = ",", scientific = FALSE)),
-            position = position_dodge(width = 0.9),
-            vjust = -0.5,
-            size = 2.5) +
-  labs(caption = "Fuente: elaboración propia en base a EPH-INDEC.",
-       fill = "Sector de actividad") +
-  scale_fill_d3(labels = function(x) str_wrap(x, width = 15)) +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        axis.text.y = element_text(size = 9),
-        axis.text.x = element_text(size = 9),
-        plot.caption = element_text(size = 9, hjust = 1),
-        plot.subtitle = element_text(size = 10),
-        panel.grid = element_line(linewidth = .2)) +
-  scale_y_continuous(labels = scales::label_number(big.mark = ".", decimal.mark = ","))
-
-
-
-```
-
  
 
 ```{r saldo por tipo}
-#| fig.cap: "Tipo de puestos creados. 2026-II vs 2025-II."
+#| fig.cap: "Evolución porcentual de inserciones laborales según registración. 2do trimestre 2026 vs 2do trimestre 2025."
 #| label: fig-puestos-creados
 
 eph %>% 
-  filter(ESTADO == 1, ano_trim %in% c("2025-II", "2026-II"), !is.na(TipodeOcupacionBIS)) %>% 
-  mutate(empleo2 = case_when(EMPLEO == 1 ~ "Formal",
-                             TRUE ~ "Informal")) %>%
-  group_by(ano_trim, empleo2, TipodeOcupacionBIS) %>%
+  filter(ESTADO == 1, ano_trim %in% c("2025-II", "2026-II"), EMPLEO !=9) %>% 
+  mutate(empleo2 = case_when(EMPLEO == 1 & categoria == 3 ~ "Asalariado con reg.",
+                             EMPLEO == 1 & categoria != 3 ~ "Independiente con reg.",
+                             EMPLEO == 2 & categoria == 3 ~ "Asalariado sin reg.",
+                             EMPLEO == 2 & categoria != 3 ~ "Independiente sin reg.",
+                             TRUE ~ NA_character_)) %>%
+  group_by(ano_trim, empleo2) %>%
   tally(PONDERA) %>% 
   pivot_wider(names_from = ano_trim, values_from = n) %>% 
-  mutate(diferencia = `2026-II` - `2025-II`) %>% 
-  filter(diferencia > 0) %>% 
-  group_by(empleo2) %>%
-  summarise(diferencia = sum(diferencia)) %>% 
-  mutate(porcentaje = diferencia / sum(diferencia)) %>% 
-  ggplot(aes(x = empleo2, y = porcentaje, fill = empleo2)) +          
+  mutate(diferencia = `2026-II` - `2025-II`,
+         diferencia_por = diferencia / `2025-II`) %>% 
+  ggplot(aes(x = empleo2, y = diferencia_por, fill = empleo2)) +          
   geom_col(alpha = .7) +
-  geom_text(aes(label = scales::percent(porcentaje, accuracy = 0.1,   
+  geom_text(aes(label = scales::percent(diferencia_por, accuracy = 0.1,   
                                         decimal.mark = ",", big.mark = ".")),
             position = position_stack(0.5),
             size = 3) +
   scale_y_continuous(labels = scales::percent_format(decimal.mark = ",",  
                                                      big.mark = ".")) +
-  scale_fill_d3(labels = c("Formal / monotributistas", "Informal / precarios")) +
+  scale_fill_d3() +
   labs(caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
@@ -614,21 +590,15 @@ eph %>%
         plot.caption = element_text(size = 9, hjust = 1),
         plot.subtitle = element_text(size = 10),
         panel.grid = element_line(size = .2),
-        legend.position = "none") +
-  scale_x_discrete(labels = c("Formal" = "Formal /\nMonotributistas",  
-                               "Informal" = "Informal /\nPrecarios"))
+        legend.position = "none") 
 
 
 
 ```
 
-El análisis diacrónico de la estructura ocupacional argentina (@fig-inserciones) revela un proceso de "desformalización" progresiva y sostenida. La participación de los asalariados formales (la categoría que concentra los puestos de trabajo más protegidos y mejor remunerados) ha experimentado una contracción significativa, descendiendo del 50% en 2016 a un mínimo histórico del 46% en 2025. 
-Esta caída de 4 puntos porcentuales en nueve años consolida un cambio estructural en el mercado laboral, caracterizado por el avance relativo de modalidades más vulnerables, como el trabajo asalariado informal, pero fundamentalmente  del cuentapropismo de baja calificación (que escaló del 16% al 20% en el mismo lapso). 
-
-
 
 ```{r Inserciones laborales}
-#| fig.cap: "Evolución de inserciones laborales. 2tos trimestre 2016-2025."
+#| fig.cap: "Evolución de inserciones laborales. 2dos trimestre 2016-2025."
 #| label: fig-inserciones
 
 eph %>% 
@@ -663,8 +633,6 @@ eph %>%
   
 
 ```
-
-## Cuentapropistas de baja calificación: el perfil de la ocupación que más creció  
 
 
 ## Jóvenes: desocupación y aceleración de la informalidad  
@@ -705,7 +673,10 @@ total %>%
   ggrepel::geom_text_repel(data = . %>% filter(ano_trim %in% c("2016-II", "2026-II")),
                   aes(label = scales::percent(porcentaje, accuracy = 0.1)),
                   size = 3,
-                  nudge_y = -0.03,
+                  direction = "y",
+                  nudge_y = 0.01,
+                  box.padding = .5,
+                  min.segment.length = Inf,
                   show.legend = FALSE) +
   scale_y_continuous(labels = scales::percent) +
   labs(caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
@@ -724,13 +695,12 @@ total %>%
 ## Saldo por región
 
 
-
 ```{r Saldo asalariados formales región}
 #| fig.cap: "Porcentaje de asalariados formales sobre población ocupada por región. 2do trimestre 2025-2026"
 #| label: fig-asalariados
 
 formales <- eph %>% 
-  filter(ESTADO == 1, ano_trim %in% c("2023-II", "2026-II"), TipodeOcupacionBIS == "asalariado formal") %>% 
+  filter(ESTADO == 1, ano_trim %in% c("2023-II", "2026-II"), TipodeOcupacionBIS == "Asalariado formal") %>% 
   group_by(ano_trim, region) %>%
   tally(PONDERA) %>% 
   rename(formales = n)
@@ -743,17 +713,39 @@ ocupados <- eph %>%
 
 tabla <- formales %>% 
   left_join(ocupados, by = c("region", "ano_trim")) %>% 
-  mutate(porcentaje_formales = formales / ocupados)
+  mutate(porcentaje_formales = formales / ocupados) %>% 
+  ungroup() %>% 
+  select(region, ano_trim, porcentaje_formales)
 
-tabla %>% 
+brecha <- tabla %>% 
+  pivot_wider(names_from = ano_trim, values_from = porcentaje_formales) %>% 
+  mutate(ano_trim = "Brecha",
+         porcentaje_formales = `2026-II` - `2023-II`) %>% 
+  select(region, ano_trim, porcentaje_formales)
+
+datos <- bind_rows(tabla, brecha) %>% 
+  mutate(
+    ano_trim = factor(ano_trim, levels = c("2023-II", "Brecha", "2026-II")),
+    etiqueta = if_else(ano_trim == "Brecha",
+                       scales::number(porcentaje_formales * 100, accuracy = 0.1,
+                                      suffix = " p.p.", style_positive = "plus",
+                                      decimal.mark = ","),
+                       scales::percent(porcentaje_formales, accuracy = 0.1,
+                                       decimal.mark = ","))
+  )
+
+datos %>% 
   ggplot(aes(x = region, y = porcentaje_formales, fill = ano_trim)) +
-  geom_bar(stat = "identity", position = "dodge", alpha = .7) +
-  geom_text(aes(label = scales::percent(porcentaje_formales, accuracy = 0.1)),
+  geom_col(position = position_dodge(width = 0.9), alpha = .7) +
+  geom_text(aes(label = etiqueta,
+                vjust = if_else(porcentaje_formales >= 0, -0.5, 1.5)),
             position = position_dodge(width = 0.9),
-            vjust = -0.5,
             size = 3) +
-  scale_fill_d3(labels = c("2023-II", "2026-II"), name = "Trimestre") +
-  labs(caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
+  scale_fill_manual(values = c("2023-II" = "#1F77B4",
+                               "Brecha"  = "grey50",
+                               "2026-II" = "#FF7F0E"),
+                    name = "Trimestre") +
+  labs(caption = "Fuente: elaboración propia en base a EPH-INDEC.\nBrecha: diferencia en puntos porcentuales entre 2026-II y 2023-II.") +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         axis.text.y = element_text(size = 9),
@@ -762,6 +754,8 @@ tabla %>%
         plot.subtitle = element_text(size = 10)) +
   scale_x_discrete(labels = c("Cuyo", "Gran Buenos Aires", "Noreste",
                               "Noroeste", "Pampeana", "Patagonia"))
+
+ggsave("fig-saldo-ocupados.png", width = 8, height = 5, dpi = 300)
     
 ```
 
@@ -770,30 +764,55 @@ tabla %>%
 
 
 ```{r Pluriempleo}
-#| fig.cap: "Evolución del pluriempleo. 2dos trimestres. 2016-2026."
+#| fig.cap: "Evolución del pluriempleo y ocupación demandante. 2016-2026 (trimestres)."
 #| label: fig-pluriempleo
 
-eph %>% 
-  filter(ESTADO == 1, TRIMESTRE == 2, PP03C != 0) %>% 
-  group_by(ANO4, PP03C) %>% 
+pluriempleo <- eph %>% 
+  filter(ESTADO == 1, PP03C != 0) %>% 
+  group_by(ano_trim, PP03C) %>% 
   tally(PONDERA) %>% 
-  group_by(ANO4) %>% 
-  mutate(porcentaje = n / sum(n)) %>%
+  group_by(ano_trim) %>% 
+  mutate(porcentaje = n / sum(n)) %>% 
   filter(PP03C == 2) %>% 
-  ggplot(aes(x = as.character(ANO4), y = porcentaje, group = 1)) +  
-  geom_point(size = 2) +
+  ungroup() %>% 
+  transmute(ano_trim, porcentaje, indicador = "Pluriempleo")
+
+ocupacion_demandante <- eph %>% 
+  filter(ESTADO == 1) %>% 
+  mutate(ocup_dem = if_else(PP03G == 1, 1, 0, missing = 0)) %>% 
+  group_by(ano_trim, ocup_dem) %>% 
+  tally(PONDERA) %>% 
+  group_by(ano_trim) %>% 
+  mutate(porcentaje = n / sum(n)) %>% 
+  filter(ocup_dem == 1) %>% 
+  ungroup() %>% 
+  transmute(ano_trim, porcentaje, indicador = "Ocupación demandante")
+
+bind_rows(pluriempleo, ocupacion_demandante) %>% 
+  ggplot(aes(x = as.character(ano_trim), y = porcentaje, color = indicador, group = indicador)) +
   geom_line(linewidth = .7) +
-  geom_text(aes(label = scales::percent(porcentaje, accuracy = .1)),
-            vjust = -0.8,
-            size = 3) +
-  scale_y_continuous(labels = scales::percent, limits = c(0, .14), breaks = seq(0, .14, .02)) +
+  geom_point(size = 2) +
+  ggrepel::geom_text_repel(data = . %>% filter(ano_trim %in% c("2016-II", "2026-II")),
+  aes(label = scales::percent(porcentaje, accuracy = 0.1, decimal.mark = ",")),
+  size = 3,
+  direction = "y",           # mueve las etiquetas solo hacia arriba/abajo
+  nudge_y = 0.006,           # las sube respecto del punto
+  box.padding = 0.5,         # espacio alrededor del texto
+  point.padding = 0.4,       # distancia a los puntos
+  min.segment.length = Inf,  # sin segmentos conectores
+  seed = 1,
+  show.legend = FALSE
+) +
+  ggsci::scale_color_d3(name = NULL) +
+  scale_y_continuous(labels = scales::percent) +
   labs(caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         axis.text.y = element_text(size = 9),
-        axis.text.x = element_text(size = 9),
+        axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
         plot.caption = element_text(size = 9, hjust = 1),
-        plot.subtitle = element_text(size = 10))
+        plot.subtitle = element_text(size = 10),
+        legend.position = "bottom")
   
   
 
@@ -863,10 +882,14 @@ saldo <- saldo %>%
   add_row(promedio_ocupados)
 
 saldo %>% 
-  mutate(color_bar = if_else(diferencia >= 0, "positivo", "negativo")) %>%
+  mutate(color_bar = case_when(
+    rama2 == "Total ocupados" ~ "total",
+    diferencia >= 0 ~ "positivo",
+    TRUE ~ "negativo"
+  )) %>%
   ggplot(aes(x = reorder(rama2, -diferencia), y = diferencia, fill = color_bar)) +
   geom_col(alpha = .7) +
-  geom_text(aes(label =  format(diferencia,
+  geom_text(aes(label = format(diferencia,
                      big.mark = ".",
                      decimal.mark = ",",
                      scientific = FALSE)),
@@ -874,7 +897,8 @@ saldo %>%
             size = 2.5) +
   scale_fill_manual(values = c(
     "positivo" = "lightblue",
-    "negativo" = "red"
+    "negativo" = "red",
+    "total"    = "orange"
   )) +
   labs(caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
   theme(axis.title.x = element_blank(),
@@ -883,10 +907,12 @@ saldo %>%
         axis.text.x = element_text(size = 8),
         plot.caption = element_text(size = 9, hjust = 1),
         plot.subtitle = element_text(size = 10),
-        panel.grid = element_line(size = .2),
+        panel.grid = element_line(linewidth = .2),
         legend.position = "none") +
   scale_x_discrete(labels = function(x) substr(x, 1, 40)) +
-  scale_y_continuous(labels = scales::label_comma(big.mark = "."), limits = c(-200000, 150000), breaks = seq(-200000, 150000, 50000)) +
+  scale_y_continuous(labels = scales::label_comma(big.mark = "."),
+                     limits = c(-200000, 150000),
+                     breaks = seq(-200000, 150000, 50000)) +
   guides(fill = "none") +
   coord_flip()
   
@@ -935,7 +961,7 @@ eph %>%
 
 
 ```{r problemas de empleo 2}
-#| fig.cap: "Composición de la población con problemas de empleo. Segundo trimestre 2026."
+#| fig.cap: "Composición de la población con problemas de empleo. 2do trimestre 2026."
 #| label: fig-problemas2
 
 eph %>%
@@ -985,7 +1011,11 @@ eph %>%
   geom_point(size = 2) +
   ggrepel::geom_text_repel(aes(label = scales::percent(porcentaje, accuracy = 0.1)),
                   size = 3,
-                  nudge_y = 0.005,
+                  direction = "y",
+                  nudge_y = 0.002,
+                  point.padding = .4,
+                  box.padding = .5,
+                  min.segment.length = Inf,
                   show.legend = FALSE) +
   scale_y_continuous(labels = scales::percent) +
   labs(caption = "Fuente: elaboración propia en base a EPH-INDEC.") +
@@ -1124,19 +1154,25 @@ tabla <- tabla %>%
   arrange(desc(variacion))
 
 tabla %>% 
-  ggplot(aes(x = fct_reorder(CATEGORIA, variacion), y = variacion)) +
+  mutate(destacado = if_else(CATEGORIA == "Total ocupados", "total", "otros")) %>% 
+  ggplot(aes(x = fct_reorder(CATEGORIA, variacion), y = variacion, color = destacado)) +
   geom_segment(aes(x = CATEGORIA, xend = CATEGORIA, y = 0, yend = variacion)) + 
-  geom_point() + 
-  scale_linewidth_identity() + 
+  geom_point(size = 2) + 
+  scale_color_manual(values = c("total" = "orange", "otros" = "black")) +
   labs(caption = "Fuente: Elaboración propia en base a EPH-INDEC") +
   theme(legend.position = "none",
         title = element_text(size = 12),
         plot.caption = element_text(size = 9, hjust = 1),
         axis.title.y = element_blank(),
         axis.title.x = element_blank(),
-        axis.text.y = element_text(size = 9),
+        axis.text.y = ggtext::element_markdown(size = 9),
         axis.text.x = element_text(size = 9)) +
-  scale_x_discrete(labels = function(x) str_wrap(x, width = 50)) +
+  scale_x_discrete(labels = function(x) {
+    txt <- gsub("\n", "<br>", str_wrap(x, width = 50))
+    if_else(x == "Total ocupados",
+            "<span style='color:orange'>**Total ocupados**</span>",
+            txt)
+  }) +
   scale_y_continuous(breaks = seq(-0.3, 1, 0.1), labels = scales::percent_format(accuracy = 1L)) +
   coord_flip()
 
@@ -1170,7 +1206,7 @@ eph %>%
 
 
 ```{r Ingresos por rama}
-#| fig.cap: "Mediana de ingresos laborales según rama de actividad (en naranja ramas con mayor peso poblacional). 2026-II."
+#| fig.cap: "Mediana de ingresos laborales según rama de actividad (en celeste ramas con mayor peso poblacional). 2026-II."
 #| label: fig-ingresos-rama
 
 #sacar outliers en ingresos
@@ -1207,13 +1243,17 @@ tabla %>%
   filter(!rama2 %in% c("Actividad no especificada claramente", 
                        "Actividades de organizaciones y organismos extraterritoriale")) %>% 
   mutate(
-    highlight = rama2 %in% c("Promedio", "Comercio al por mayor y al por menor; reparación de vehículo",
-                             "Industria manufacturera", "Construcción", "Administración pública y defensa; planes de seguro social ob",
-                             "Enseñanza", "Salud humana y servicios sociales",
-                             "Actividades de los hogares como empleadores de personal domé",
-                             "Transporte y almacenamiento"), 
-    color = ifelse(highlight, "orange", "black"), # Asignar colores
-  ) %>%
+  highlight = rama2 %in% c("Promedio", "Comercio al por mayor y al por menor; reparación de vehículo",
+                           "Industria manufacturera", "Construcción", "Administración pública y defensa; planes de seguro social ob",
+                           "Enseñanza", "Salud humana y servicios sociales",
+                           "Actividades de los hogares como empleadores de personal domé",
+                           "Transporte y almacenamiento"),
+  color = case_when(
+    rama2 == "Promedio" ~ "orange",
+    highlight           ~ "lightblue",
+    TRUE                ~ "black"
+  )
+) %>%
   ggplot(aes(x = fct_reorder(rama2, ingresos), y = ingresos)) +
   geom_segment(aes(x = rama2, xend = rama2, y = 0, yend = ingresos, 
                    color = color)) + # Usar columnas calculadas
@@ -1230,8 +1270,8 @@ tabla %>%
         axis.title.x = element_blank(),
         axis.text.y = element_text(size = 9),
         axis.text.x = element_text(size = 8)) +
-  scale_x_discrete(labels = function(x) str_wrap(x, width = 75)) +
-  scale_y_continuous(breaks = seq(0, 3000000, 500000), labels = scales::label_number(scale = 1, accuracy = 1, big.mark = "")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 60)) +
+  scale_y_continuous(breaks = seq(0, 3000000, 1000000), labels = scales::label_number(scale = 1, accuracy = 1, big.mark = ".")) +
   coord_flip()
 
 
@@ -1423,6 +1463,7 @@ tabla %>%
         axis.title = element_blank(),
         axis.text = element_text(size = 9),
         legend.title = element_blank()) +
+  guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
   scale_color_d3(labels = c("Ahorros familiares",
                             "Venta de pertenencias",
                             "Préstamos bancarios / financieros",
@@ -1618,36 +1659,62 @@ pool_cons2026 <- subset(pool2026, consistencia == TRUE)
 #| fig.cap: "Trayectorias de entrada y salida de la pobreza. Argentina urbana, 2025-2026 (2do trimestre)."
 #| label: fig-trayectorias-pobreza
 
-total <- pool_cons2026 %>%
-  filter(Periodo == "2025 Q2", !is.na(pobreza_f), !is.na(pobreza_f_t1)) %>%
-  tally(pondera_sin_elevar_t1) %>%
+base <- pool_cons2026 %>%
+  filter(Periodo == "2025 Q2", !is.na(pobreza_f), !is.na(pobreza_f_t1))
+
+total  <- base %>% 
+  tally(pondih_sin_elevar_t1) %>% 
   pull(n)
 
-pool_cons2026 %>% 
-    filter(Periodo == "2025 Q2", !is.na(pobreza_f), !is.na(pobreza_f_t1)) %>%
-    group_by(pobreza_f, pobreza_f_t1) %>%
-    tally(pondera_sin_elevar_t1) %>% 
-    ungroup() %>% 
-    mutate(percent = n/sum(n)) %>% 
-    ggplot(aes(y = percent, axis1 = pobreza_f, axis2 = pobreza_f_t1)) +
-    geom_alluvium(aes(fill = pobreza_f), width = .5) +
-    geom_stratum(width = .2, alpha = .1, size = .4) +
-    geom_text(aes(label = paste0(..stratum.., "\n", scales::percent(..count.., accuracy = .1))), stat = "stratum", size = 3) +
-    scale_fill_d3() +
-  labs(caption = paste0(
-  "Fuente: elaboración propia en base a EPH-INDEC. Total: ",
-  round(total))) +
-    theme_minimal(base_size = 10) +
-    theme(
-      axis.title.x = element_blank(),
-      axis.title.y = element_blank(),
-      axis.text.y = element_text(size = 9),
-      axis.text.x = element_text(size = 9),
-      legend.position = "none",
-      plot.title = element_text(size = 10)
-    ) +
-    scale_x_discrete(limits = c("2025-II", "2026-II"), expand = c(.05, .05)) +
-    scale_y_continuous(labels = scales::percent_format(accuracy = 1L), breaks = seq(0, 1, by = 0.2))
+datos <- base %>%
+  group_by(pobreza_f, pobreza_f_t1) %>%
+  tally(pondih_sin_elevar_t1) %>% 
+  ungroup() %>% 
+  mutate(percent = n / sum(n))
+
+pt  <- function(a, b) datos$percent[datos$pobreza_f == a & datos$pobreza_f_t1 == b]
+pct <- function(x) scales::percent(x, accuracy = 0.1, decimal.mark = ",")
+
+sigue_np <- pt("No pobre", "No pobre")
+sigue_p  <- pt("Pobre", "Pobre")
+entrada  <- pt("No pobre", "Pobre")
+salida   <- pt("Pobre", "No pobre")
+
+ggplot(datos, aes(y = percent, axis1 = pobreza_f, axis2 = pobreza_f_t1)) +
+  geom_alluvium(aes(fill = pobreza_f), width = .5) +
+  geom_stratum(width = .2, alpha = .1, size = .4) +
+  geom_text(aes(label = paste0(after_stat(stratum), "\n",
+                               scales::percent(after_stat(count), accuracy = .1, decimal.mark = ","))),
+            stat = "stratum", size = 3) +
+  # Anotaciones de cada trayectoria
+  annotate("text", x = 1.5, y = 1 - sigue_np / 2, size = 3,
+           label = paste0("Siguen no pobres: ", pct(sigue_np))) +
+  annotate("text", x = 1.5, y = sigue_p / 2, size = 3,
+           label = paste0("Siguen pobres: ", pct(sigue_p))) +
+  annotate("text", x = 1.25, y = 0.52, hjust = 0, size = 3, fontface = "bold", color = "#D62728",
+           label = paste0("Entrada a la pobreza: ", pct(entrada))) +
+  annotate("segment", x = 1.3, xend = 1.4, y = 0.50, yend = 0.38,
+           color = "#D62728", linewidth = .3,
+           arrow = arrow(length = unit(0.15, "cm"), type = "closed")) +
+  annotate("text", x = 1.6, y = 0.52, hjust = 0, size = 3, fontface = "bold", color = "#1F77B4",
+           label = paste0("Salida de la pobreza: ", pct(salida))) +
+  annotate("segment", x = 1.75, xend = 1.65, y = 0.50, yend = 0.36,
+           color = "#1F77B4", linewidth = .3,
+           arrow = arrow(length = unit(0.15, "cm"), type = "closed")) +
+  scale_fill_d3() +
+  labs(caption = paste0("Fuente: elaboración propia en base a EPH-INDEC. Total personas en el panel: ",
+                        format(round(total), big.mark = "."))) +
+  theme_minimal(base_size = 10) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.y = element_text(size = 9),
+    axis.text.x = element_text(size = 9),
+    legend.position = "none",
+    plot.title = element_text(size = 10)
+  ) +
+  scale_x_discrete(limits = c("2025-II", "2026-II"), expand = c(.05, .05)) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L), breaks = seq(0, 1, by = 0.2))
 
 ```
 
