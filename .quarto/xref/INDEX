@@ -41,5 +41,9 @@
   "posts/informe5/index.qmd": {
     "index.html": "6d15b009",
     "index.tex": "de1b0de4"
+  },
+  "posts/informe6/index.qmd": {
+    "index.html": "a524e27b",
+    "index.tex": "20bfe5b0"
   }
 }

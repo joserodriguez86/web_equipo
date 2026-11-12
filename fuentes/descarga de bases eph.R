@@ -12,6 +12,7 @@ eph2023 <- get_microdata(2023, type = "individual", period = c(1:4))
 eph2024 <- get_microdata(2024, type = "individual", period = c(1:3))
 eph2024_4 <- get_microdata(2024, type = "individual", period = 4)
 eph2025 <- get_microdata(2025, type = "individual", period = c(1:4))
+eph2026 <- get_microdata(2026, type = "individual", period = c(1:4))
 
 #arreglo por problema en 2024_4
 eph2024_4 <- eph2024_4 %>% 
@@ -20,8 +21,8 @@ eph2024_4 <- eph2024_4 %>%
 eph2024 <- bind_rows(eph2024, eph2024_4)
 rm(eph2024_4)
 
-eph <- bind_rows(eph2016, eph2017, eph2018, eph2019, eph2020, eph2021, eph2022, eph2023, eph2024, eph2025)
-rm(eph2016, eph2017, eph2018, eph2019, eph2020, eph2021, eph2022, eph2023, eph2024, eph2025)
+eph <- bind_rows(eph2016, eph2017, eph2018, eph2019, eph2020, eph2021, eph2022, eph2023, eph2024, eph2025, eph2026)
+rm(eph2016, eph2017, eph2018, eph2019, eph2020, eph2021, eph2022, eph2023, eph2024, eph2025, eph2026)
 
 eph_hogar2016 <- get_microdata(year = 2016, period = c(1:4), type = "hogar")
 eph_hogar2017 <- get_microdata(year = 2017, period = c(1:4), type = "hogar")
@@ -33,12 +34,23 @@ eph_hogar2022 <- get_microdata(year = 2022, period = c(1:4), type = "hogar")
 eph_hogar2023 <- get_microdata(year = 2023, period = c(1:4), type = "hogar")
 eph_hogar2024 <- get_microdata(year = 2024, period = c(1:4), type = "hogar")
 eph_hogar2025 <- get_microdata(year = 2025, period = c(1:4), type = "hogar")
+eph_hogar2026 <- get_microdata(year = 2026, period = c(1:4), type = "hogar")
 
-eph_hogar <- bind_rows(eph_hogar2016, eph_hogar2017, eph_hogar2018, eph_hogar2019, eph_hogar2020, eph_hogar2021, eph_hogar2022, eph_hogar2023, eph_hogar2024, eph_hogar2025)
+eph_hogar <- bind_rows(eph_hogar2016, eph_hogar2017, eph_hogar2018, eph_hogar2019, eph_hogar2020, eph_hogar2021, eph_hogar2022, eph_hogar2023, eph_hogar2024, eph_hogar2025, eph_hogar2026)
 
-rm(eph_hogar2016, eph_hogar2017, eph_hogar2018, eph_hogar2019, eph_hogar2020, eph_hogar2021, eph_hogar2022, eph_hogar2023, eph_hogar2024, eph_hogar2025)
+rm(eph_hogar2016, eph_hogar2017, eph_hogar2018, eph_hogar2019, eph_hogar2020, eph_hogar2021, eph_hogar2022, eph_hogar2023, eph_hogar2024, eph_hogar2025, eph_hogar2026)
+
+eph_hogar <- eph_hogar %>%
+  select(!c("PONDERA", "PONDIH", "REGION", "MAS_500", "AGLOMERADO", "ITF",
+            "DECIFR",  "IDECIFR", "RDECIFR", "GDECIFR", "PDECIFR", "ADECIFR",
+            "IPCF", "DECCFR", "IDECCFR", "RDECCFR", "GDECCFR", "PDECCFR",
+            "ADECCFR"))
+
+
+eph <- eph %>%
+  left_join(eph_hogar, by = c("ANO4", "TRIMESTRE", "CODUSU", "NRO_HOGAR"))
 
 saveRDS(eph, file = "fuentes/eph_individual.RDS")
 saveRDS(eph_hogar, file = "fuentes/eph_hogar.RDS")
 
-# haven::write_sav(eph, "C:/Users/josed/Downloads/eph_individual.sav")
+# haven::write_sav(eph, "C:/Users/josed/Downloads/eph.sav") #CAMBIAR RUTA DE GUARDADO
